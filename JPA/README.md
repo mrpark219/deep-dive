@@ -76,3 +76,7 @@ graph TD
     OracleDialect -- "Oracle SQL 생성" --> Oracle["Oracle DB"]
     H2Dialect -- "H2 SQL 생성" --> H2["H2 DB"]
 ```
+
+## 영속성 관리
+
+[영속성 관리](./jpa-persistence.md)
