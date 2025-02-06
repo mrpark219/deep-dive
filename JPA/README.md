@@ -60,3 +60,19 @@ graph LR
    - 데이터베이스 벤더에 종속되지 않으며, 다양한 데이터베이스를 지원한다.
 6. 표준
    - JPA는 자바 진영에서 표준으로 채택된 기술로, 다른 ORM 프레임워크와의 호환성도 뛰어나다.
+
+## 데이터베이스 방언(Dialect)
+
+데이터베이스 방언(Dialect)은 각 DBMS가 제공하는 SQL의 변형으로, 표준 SQL(ANSI SQL)을 기반으로 하여 DBMS 특화 기능이나 문법을 추가한 것이다. MySQL, PostgreSQL, Oracle, SQL Server는 각각 고유한 SQL 방언을 사용한다.
+JPA는 특정 데이터베이스에 종속되지 않는다. -> 추상화 및 벤더 독립성
+
+```mermaid
+graph TD
+    JPA["JPA"] -- "사용" --> Dialect["Dialect"]
+    Dialect --> MySQLDialect["MySQLDialect"]
+    Dialect --> OracleDialect["OracleDialect"]
+    Dialect --> H2Dialect["H2Dialect"]
+    MySQLDialect -- "MySQL SQL 생성" --> MySQL["MySQL DB"]
+    OracleDialect -- "Oracle SQL 생성" --> Oracle["Oracle DB"]
+    H2Dialect -- "H2 SQL 생성" --> H2["H2 DB"]
+```
