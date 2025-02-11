@@ -80,3 +80,7 @@ graph TD
 ## 영속성 관리
 
 [영속성 관리](./jpa-persistence.md)
+
+## 엔티티 매핑
+
+[엔티티 매핑](./jpa-entity-mapping.md)
