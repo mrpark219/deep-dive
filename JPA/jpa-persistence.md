@@ -145,3 +145,83 @@ graph TD
 - `remove()`: 영속 → 삭제
 - `flush()`: 변경 사항을 즉시 DB에 반영
 - `find()`: DB에서 데이터를 조회하여 영속 상태로 변경
+
+## 영속성 컨텍스트의 이점
+
+영속성 컨텍스트는 엔티티의 상태를 관리하며, 다양한 최적화 기능을 제공하여 애플리케이션의 성능과 일관성을 향상시킨다.
+
+### 1. 엔티티 조회, 1차 캐시
+
+- JPA는 영속성 컨텍스트 내부에 1차 캐시(First-Level Cache) 를 제공한다.
+- 동일한 엔티티를 여러 번 조회할 경우, 데이터베이스에 쿼리를 보내지 않고 메모리(1차 캐시)에서 값을 가져온다.
+- 성능 최적화와 데이터베이스 부하 감소 효과를 얻을 수 있다.
+
+```java
+// 엔티티 조회 시 첫 번째는 DB에서 가져오고, 두 번째는 1차 캐시에서 조회됨
+Member member1 = em.find(Member.class, 1L); // DB 조회 → 1차 캐시에 저장
+Member member2 = em.find(Member.class, 1L); // 1차 캐시에서 조회 (DB 조회 X)
+```
+
+### 2. 동일성 보장
+
+- 영속성 컨텍스트는 같은 트랜잭션 내에서 동일한 엔티티 객체를 반환한다.
+- 같은 id 값을 가진 엔티티를 조회하면 항상 같은 인스턴스가 반환되며, == 비교가 가능하다.
+- 반복 가능한 읽기(REPEATABLE READ) 등급의 트랜잭션 격리 수준을 애플리케이션 차원에서 제공하여, 데이터베이스 부하를 줄인다.
+
+```java
+Member memberA = em.find(Member.class, 1L);
+Member memberB = em.find(Member.class, 1L);
+
+System.out.println(memberA == memberB); // true (같은 인스턴스)
+```
+
+### 3. 트랜잭션을 지원하는 쓰기 지연(transcational write-behind)
+
+- JPA는 트랜잭션이 커밋될 때까지 INSERT, UPDATE, DELETE 쿼리를 지연시켜 한꺼번에 실행한다.
+- 이를 통해 불필요한 데이터베이스 I/O를 최소화하고, 성능을 향상시킨다.
+- hibernate에서는 hibernate.jdbc.batch_size 옵션을 통해 한 번에 처리할 수 있는 쿼리 수를 지정할 수 있다.
+
+```java
+em.persist(member1);
+em.persist(member2);
+em.persist(member3);
+
+// 트랜잭션 커밋 시, INSERT 쿼리가 한꺼번에 실행됨
+tx.commit();
+```
+
+### 4. 변경 감지(dirty check)
+
+- 영속성 컨텍스트는 엔티티의 변경 사항을 자동으로 감지하여 변경된 필드만 업데이트하는 UPDATE 쿼리를 생성한다.
+- 변경 감지 동작 방식
+  - 스냅샷 저장: 데이터베이스에서 엔티티를 조회하면, 조회 시점의 값(스냅샷) 을 내부적으로 저장한다.
+  - 변경 사항 비교: 엔티티의 값을 변경하면, 스냅샷과 현재 상태를 비교하여 변경된 필드를 찾는다.
+  - 트랜잭션 커밋 시점에 반영: `flush()` 또는 `commit()` 시점에 변경 사항을 감지하고, 변경된 필드만 포함된 UPDATE SQL을 실행한다.
+  - SQL 직접 작성 없이 자동 반영: 변경 감지를 통해 명시적인 UPDATE SQL을 작성할 필요 없이 JPA가 자동으로 처리해준다.
+
+```java
+Member member = em.find(Member.class, 1L); // 1차 캐시에 저장 & 스냅샷 저장
+member.setUsername("변경된 회원"); // 값 변경 (UPDATE 실행 X)
+
+// 트랜잭션 커밋 시점에서 변경 감지 → UPDATE 실행
+tx.commit();
+```
+
+### 5. 지연 로딩(lazy loading)
+
+- 실제 엔티티가 필요할 때까지 데이터베이스 조회를 지연한다.
+- 연관된 엔티티를 즉시 조회하는 즉시 로딩(Eager Loading) 대신, 지연 로딩(Lazy Loading) 을 사용하여 성능을 최적화할 수 있다.
+
+```java
+@Entity
+public class Member {
+    @Id @GeneratedValue
+    private Long id;
+    
+    @ManyToOne(fetch = FetchType.LAZY) // 지연 로딩 설정
+    private Team team;
+}
+
+Member member = em.find(Member.class, 1L); // Team 엔티티 조회 X (프록시 객체)
+System.out.println(member.getTeam().getName()); // 이때 쿼리 실행 (Team 조회)
+```
