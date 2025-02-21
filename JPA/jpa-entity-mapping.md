@@ -116,3 +116,177 @@
 - 해당 필드는 컬럼으로 매핑되지 않는다.
 - 데이터베이스에 저장되지 않으며, 조회도 불가능하다.
 - 주로 메모리상에서만 임시로 값을 저장할 때 사용된다.
+
+## 기본 키 매핑
+
+### 기본 키 매핑 어노테이션
+
+- `@Id`: 기본 키(primary key)로 지정
+- `@GeneratedValue`: 기본 키 값 자동 생성 전략 지정
+
+### 기본 키 매핑 방법
+
+| 전략      | 설명                                                 |
+| --------- | ---------------------------------------------------- |
+| 직접 할당 | `@Id`만 사용하여 기본 키를 직접 할당                 |
+| 자동 생성 | `@GeneratedValue`를 사용하여 기본 키를 자동으로 생성 |
+
+### 자동 생성 전략
+
+| 전략       | 설명                                                                |
+| ---------- | ------------------------------------------------------------------- |
+| `IDENTITY` | 기본 키 생성을 데이터베이스에 위임 (ex. MySQL `AUTO_INCREMENT`)     |
+| `SEQUENCE` | 데이터베이스 시퀀스를 사용 (ex. Oracle) - `@SequenceGenerator` 필요 |
+| `TABLE`    | 키 생성용 테이블을 사용하여 기본 키 생성 - `@TableGenerator` 필요   |
+| `AUTO`     | 방언(dialect)에 따라 자동으로 적절한 전략 선택 (기본값)             |
+
+#### IDENTITY 전략
+
+- 기본 키 생성을 **데이터베이스에 위임**
+- 주로 **MySQL, PostgreSQL, SQL Server, DB2**에서 사용
+- 데이터베이스의 `AUTO_INCREMENT` 기능을 활용하여 ID 값을 자동 생성
+
+##### 동작 방식
+
+- JPA는 일반적으로 **트랜잭션 커밋 시점**에 `INSERT SQL`을 실행
+- 하지만 **IDENTITY 전략**은 `AUTO_INCREMENT` 방식으로 ID를 생성하므로,
+  **`em.persist()` 시점에 즉시 `INSERT SQL`을 실행하고, 생성된 ID 값을 조회**
+- 따라서 **영속성 컨텍스트에 저장될 때 ID가 결정됨**
+
+##### 장점
+
+- **설정이 간단**하고 데이터베이스의 기능을 활용할 수 있음
+- **성능이 우수** (데이터베이스에서 자동으로 ID를 생성)
+
+##### 단점
+
+- **트랜잭션 롤백 시에도 ID가 증가** (AUTO_INCREMENT 특성상 재사용되지 않음)
+- **배치 INSERT가 비효율적** (영속성 컨텍스트에 저장하기 전에 `INSERT SQL` 실행 필요)
+
+##### 예제 코드
+
+```java
+@Entity
+public class Member {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // IDENTITY 전략 사용
+    private Long id;
+
+    private String name;
+}
+```
+
+#### SEQUENCE 전략
+
+- 데이터베이스 **시퀀스(Sequence)**는 **유일한 값을 순서대로 생성**하는 객체
+- **오라클, PostgreSQL, DB2, H2** 데이터베이스에서 사용 가능
+- JPA에서 **SEQUENCE 전략**을 사용하면 `@SequenceGenerator`와 함께 설정해야 함
+
+##### 동작 방식
+
+1. **시퀀스 객체**를 사용하여 새로운 기본 키 값을 생성
+2. `INSERT SQL`을 실행하기 전에 **먼저 시퀀스를 호출하여 ID 값을 가져옴**
+3. 가져온 ID 값을 엔티티의 기본 키로 할당한 후 `INSERT SQL` 실행
+
+##### 장점
+
+- 데이터베이스에서 ID를 미리 조회 후 할당 → **배치 INSERT 가능**
+- 트랜잭션 롤백 시에도 시퀀스 값 증가하지만, AUTO_INCREMENT보다는 제어가 쉬움
+
+##### 단점
+
+- 데이터베이스에 시퀀스 객체가 필요 (MySQL 등 지원하지 않는 DB에서는 사용 불가)
+
+##### @SequenceGenerator
+
+- **시퀀스 생성기(sequence generator)**를 정의할 때 사용
+
+| 속성                | 설명                                                                                                     | 기본값               |
+| ------------------- | -------------------------------------------------------------------------------------------------------- | -------------------- |
+| `name`              | 식별자 생성기 이름 (필수)                                                                                | 필수                 |
+| `sequenceName`      | 데이터베이스에 등록된 시퀀스 이름                                                                        | `hibernate_sequence` |
+| `initialValue`      | DDL 생성 시에만 사용됨, 시퀀스 시작 값 지정                                                              | `1`                  |
+| `allocationSize`    | 한 번 시퀀스 호출 시 증가하는 수 (성능 최적화 목적)<br> DB 시퀀스가 1씩 증가하면 이 값을 반드시 1로 설정 | 50                   |
+| `catalog`, `schema` | 데이터베이스 catalog, schema 이름 지정                                                                   |                      |
+
+---
+
+##### 예제 코드
+
+```java
+@Entity
+@SequenceGenerator(
+    name = "member_seq_generator", // 시퀀스 생성기 이름
+    sequenceName = "member_seq",   // 실제 데이터베이스 시퀀스 이름
+    initialValue = 1,              // 시퀀스 시작 값
+    allocationSize = 1             // 시퀀스 증가량 (DB 설정과 맞춰야 함)
+)
+public class Member {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "member_seq_generator")
+    private Long id;
+
+    private String name;
+}
+```
+
+#### Table 전략
+
+- **키 생성 전용 테이블을 만들어** 데이터베이스 시퀀스를 **흉내내는 전략**
+
+##### 장점
+
+- 모든 데이터베이스에서 **사용 가능** (시퀀스 지원 여부에 관계없음)
+
+##### 단점
+
+- 성능이 낮음 (매번 키 생성 테이블을 조회해야 함)
+- 동시성 제어가 필요할 수도 있음 (낮은 성능으로 인해 충돌 가능)
+
+##### @TableGenerator
+
+- 키 생성용 테이블을 정의할 때 사용
+
+| 속성                   | 설명                                                  | 기본값              |
+| ---------------------- | ----------------------------------------------------- | ------------------- |
+| name                   | 식별자 생성기 이름                                    | 필수                |
+| table                  | 키생성 테이블명                                       | hibernate_sequences |
+| pkColumnName           | 시퀀스 컬럼명                                         | sequence_name       |
+| valueColumnName        | 시퀀스 값 컬럼명                                      | next_val            |
+| pkColumnValue          | 키로 사용할 값 이름                                   | 엔티티 이름         |
+| initialValue           | 초기 값, 마지막으로 생성된 값이 기준이다.             | 0                   |
+| allocationSize         | 시퀀스 한 번 호출에 증가하는 수(성능 최적화에 사용됨) | **50**              |
+| catalog, schema        | 데이터베이스 catalog, schema 이름                     |                     |
+| uniqueConstraints(DDL) | 유니크 제약 조건을 지정할 수 있다.                    |                     |
+
+##### 예제 코드
+
+```java
+@Entity
+@TableGenerator(
+    name = "member_table_generator",  // 식별자 생성기 이름
+    table = "my_sequences",           // 키 생성용 테이블명
+    pkColumnName = "sequence_name",   // 시퀀스 이름을 저장할 컬럼명
+    valueColumnName = "next_val",     // 시퀀스 값을 저장할 컬럼명
+    pkColumnValue = "member_seq",     // 사용할 시퀀스 키 값
+    initialValue = 1,                 // 초기 값
+    allocationSize = 1                // 증가 값 (DB 설정과 맞춰야 함)
+)
+public class Member {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.TABLE, generator = "member_table_generator")
+    private Long id;
+
+    private String name;
+}
+```
+
+### 권장하는 식별자 전략
+
+- 기본 키 제약 조건: `NULL 아님`, `유일`, `변경 불가`
+- 자연 키 문제: 미래에도 위 조건을 만족하는 자연 키를 찾기 어려움
+- 해결책: 대리 키(대체 키) 사용 권장
+- 추천 방식: `Long 타입` + `대체 키` + `키 생성 전략 사용`
