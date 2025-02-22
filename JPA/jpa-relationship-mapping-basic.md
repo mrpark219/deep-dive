@@ -33,3 +33,68 @@
 - 객체의 **참조(Reference)를 통해 연관 객체를 쉽게 조회** 가능하다.
 - **객체 그래프 탐색**이 가능하다. (`member.getTeam().getName()`)
 - 데이터베이스의 **외래 키를 직접 다루지 않아도 된다**.
+
+## 단방향 연관관계
+
+- 한 객체에서 다른 객체로만 참조하는 관계이다.
+- 반대 방향에서는 참조할 수 없다.
+- 테이블의 외래 키는 존재하지만, 객체 관점에서는 **한 방향으로만 관계를 탐색**할 수 있다.
+- 조회가 한 방향으로만 필요한 경우, 단순한 관계를 유지하고 싶은 경우에 불필요한 복잡성을 줄이기 위해 사용한다.
+
+### 단방향 연관관계 예제
+
+```java
+// Member 엔티티
+@Entity
+public class Member {
+
+    @Id @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    @ManyToOne // 다대일(N:1) 단방향 연관관계
+    @JoinColumn(name = "team_id") // 외래 키 매핑
+    private Team team;
+}
+```
+
+```java
+// Team 엔티티
+@Entity
+public class Team {
+
+    @Id @GeneratedValue
+    private Long id;
+
+    private String name;
+}
+```
+
+```java
+// 사용 예시
+
+// 조회
+Member findMember = em.find(Member.class, member.getId());
+
+// 참조를 사용하여 연관관계 조회
+Team findTeam = findMember.getTeam();
+
+// 연관관계 수정
+member.setTeam(newTeam);
+```
+
+```sql
+-- 데이터베이스 테이블 구조
+CREATE TABLE Member (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255),
+    team_id BIGINT,
+    FOREIGN KEY (team_id) REFERENCES Team(id)
+);
+
+CREATE TABLE Team (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255)
+);
+```
