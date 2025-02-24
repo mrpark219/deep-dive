@@ -84,3 +84,11 @@ graph TD
 ## 엔티티 매핑
 
 [엔티티 매핑](./jpa-entity-mapping.md)
+
+## 연관관계 매핑 기초
+
+[연관관계 매핑 기초](./jpa-relationship-mapping-basic.md)
+
+## 다양한 연관관계 매핑
+
+[다양한 연관관계 매핑](./jpa-relationship-mapping.md)
