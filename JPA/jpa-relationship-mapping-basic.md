@@ -172,7 +172,48 @@ em.persist(member);
 team.getMembers().forEach(m -> System.out.println(m.getName())); // Member1 출력
 ```
 
+### 양방향 매핑 시 가장 많이 하는 실수
+
+- 연관관계의 주인에 값을 입력하지 않는다.
+
+```java
+Team team = new Team();
+team.setName("TeamA");
+em.persist(team);
+
+Member member = new Member();
+member.setName("member1");
+
+// 역방향(주인이 아닌 방향)만 연관관계 설정
+// mappedBy는 읽기 전용이므로 외래 키가 저장되지 않음
+team.getMembers().add(member);
+em.persist(member);
+```
+
+- 순수 객체 상태를 고려해서 항상 양쪽에 값을 설정해야 한다.
+
+`flush()`, `clear()` 후에 새롭게 데이터베이스에서 불러오면 변경된 정보가 새롭게 반영되지만, 한 객체에서만 변경하고 그대로 사용하면 정보가 다르게 보인다.
+그렇기 때문에 연관관계 편의 메서드를 생성하는 것이 좋다. `set`으로 시작하는 함수명보다는 명확한 의미를 가진 함수명을 사용하는 것이 좋으며, 두 객체 모두가 아닌 한 객체에서만 만들어야 한다.
+
+```java
+public class Member {
+    ...
+    public void changeTeam(Team team) {
+        this.team = team;
+        team.getMembers().add(this); // 연관관계 편의 메서드
+    }
+}
+```
+
+- 양방향 매핑 시에 무한 루프를 조심해야 한다.
+  - `toString()`, Lombok의 `@Data`, `@ToString`, JSON 생성 라이브러리(Jackson 등) 사용 시 무한 루프가 발생할 수 있다.
+
 ### 양방향 연관관계 정리
+
+- 단방향 매핑만으로 이미 연관관계 매핑은 완료된 것이다.
+- 양방향 매핑은 반대 방향으로 조회(객체 그래프 탐색) 기능이 추가된 것일 뿐이다.
+- JPQL에서 역방향 탐색이 필요할 경우에만 추가하는 것이 좋다.
+- 단방향 매핑을 먼저 적용하고, 필요한 경우에만 양방향을 추가한다. (테이블에는 영향을 주지 않는다.)
 
 | 항목                    | 연관관계의 주인 (`@ManyToOne`) | 주인이 아닌 객체 (`@OneToMany`)  |
 | ----------------------- | ------------------------------ | -------------------------------- |
