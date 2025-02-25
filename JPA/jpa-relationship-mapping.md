@@ -80,7 +80,7 @@ erDiagram
         VARCHAR NAME
     }
 
-    MEMBER }o--|| TEAM : "다대일(N:1)"
+    MEMBER }o--o| TEAM : ""
 ```
 
 ### 다대일 양방향
@@ -102,6 +102,7 @@ classDiagram
 
     class Team {
         +Long id
+        +List members - 읽기 전용
         +String name
     }
 
@@ -125,5 +126,105 @@ erDiagram
         VARCHAR NAME
     }
 
-    MEMBER }o--|| TEAM : "다대일(N:1)"
+    MEMBER }o--o| TEAM : ""
+```
+
+## 일대다(1:N)
+
+### 일대다 단방향
+
+- **특징**: **일(1)이 연관관계의 주인**이 되는 관계이다.
+- **객체 연관관계**: `Team`이 `Member` 목록을 관리한다.
+- **테이블 연관관계**: 외래 키(`TEAM_ID`)가 MEMBER 테이블에 위치한다.
+- **제약 사항**:
+  - `@JoinColumn`을 꼭 사용해야 한다. 사용하지 않으면 조인 테이블 방식을 사용하여 중간에 테이블을 하나 추가한다.
+  - 객체 설계와 테이블 설계 불일치 → 외래 키 관리가 어렵다.
+  - 추가적인 `UPDATE SQL` 실행 → 성능 문제가 발생 가능하다.
+  - **권장되지 않는 방식** → **다대일 양방향 매핑을 추천**.
+    - 외래 키를 `Member`에서 관리하여 객체와 테이블 설계를 일치시킬 수 있다.
+    - 추가적인 `UPDATE SQL`을 실행하지 않는다.
+
+```mermaid
+---
+title: 객체 연관관계
+---
+classDiagram
+    class Member {
+        +Long id
+        +String username
+    }
+
+    class Team {
+        +Long id
+        +String name
+        +List members
+    }
+
+    Team --> Member : 일대다(1 -> N)
+```
+
+```mermaid
+---
+title: 테이블 연관관계
+---
+erDiagram
+    MEMBER {
+        BIGINT MEMBER_ID PK
+        BIGINT TEAM_ID FK
+        VARCHAR USERNAME
+    }
+
+    TEAM {
+        BIGINT TEAM_ID PK
+        VARCHAR NAME
+    }
+
+    MEMBER }o--o| TEAM : ""
+```
+
+### 일대다 양방향
+
+- **공식적인 매핑 방식이 아니다.** → JPA에서 지원하는 일반적인 방식은 아니다.
+- `@ManyToOne`과 `@JoinColumn(insertable=false, updatable=false)`을 이용해 **읽기 전용 필드**를 추가하여 구현한다.
+- **실제로는 다대일 단방향 + 읽기 전용 필드 조합**이다.
+- **추천 방식이 아니다.** → **다대일 양방향(`@ManyToOne + @OneToMany`)을 권장한다.**
+
+```mermaid
+---
+title: 객체 연관관계
+---
+classDiagram
+    class Member {
+        +Long id
+        +String username
+        +Team team - 읽기 전용
+    }
+
+    class Team {
+        +Long id
+        +String name
+        +List members
+    }
+
+    Team --> Member : 일대다(1 -> N) members
+    Member ..> Team : 다대일(N -> 1) team
+```
+
+```mermaid
+---
+title: 테이블 연관관계
+---
+erDiagram
+    MEMBER {
+        BIGINT MEMBER_ID PK
+        BIGINT TEAM_ID FK
+        VARCHAR USERNAME
+    }
+
+    TEAM {
+        BIGINT TEAM_ID PK
+        VARCHAR NAME
+    }
+
+    MEMBER }o--o| TEAM : ""
 ```
