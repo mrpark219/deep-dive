@@ -228,3 +228,163 @@ erDiagram
 
     MEMBER }o--o| TEAM : ""
 ```
+
+## 일대일(1:1)
+
+- 양쪽 모두 1개만 참조가 가능하다 → `1:1` 관계.
+- 외래 키 위치를 선택할 수 있다.:
+  - **주 테이블에 외래 키** → 일반적으로 사용된다.
+  - **대상 테이블에 외래 키** → **JPA에서 단방향 지원 X**.
+- 외래 키에 유니크 제약 조건을 추가하는 것이 좋다. → `@OneToOne` + `@JoinColumn(unique = true)`.
+
+### 일대일 단방향 - 주 테이블에 외래 키
+
+- 주 테이블: `MEMBER` → `LOCKER_ID` 외래 키를 포함한다.
+- `@OneToOne` + `@JoinColumn`을 사용한다..
+- 구조는 다대일 단방향과 유사하다..
+
+```mermaid
+---
+title: 객체 연관관계
+---
+classDiagram
+    class Member {
+        +Long id
+        +String username
+        +Locker locker
+    }
+
+    class Locker {
+        +Long id
+        +String name
+    }
+
+    Member --> Locker : 일대일(1 -> 1)
+```
+
+```mermaid
+---
+title: 테이블 연관관계
+---
+erDiagram
+    MEMBER {
+        BIGINT MEMBER_ID PK
+        BIGINT LOCKER_ID FK, UK
+        VARCHAR USERNAME
+    }
+
+    LOCKER {
+        BIGINT LOCKER_ID PK
+        VARCHAR NAME
+    }
+
+    MEMBER |o--o| LOCKER : ""
+```
+
+### 일대일 양방향 - 주 테이블에 외래 키
+
+- 외래 키가 있는 `MEMBER`가 연관관계의 주인이다.
+- 반대편(`Locker`)에 `mappedBy`를 적용한다.
+
+```mermaid
+---
+title: 객체 연관관계
+---
+classDiagram
+    class Member {
+        +Long id
+        +String username
+        +Locker locker
+    }
+
+    class Locker {
+        +Long id
+        +String name
+        +Member member
+    }
+
+    Member --> Locker : 일대일(1 -> 1)
+    Locker ..> Member : 일대일(1 -> 1)
+```
+
+```mermaid
+---
+title: 테이블 연관관계
+---
+erDiagram
+    MEMBER {
+        BIGINT MEMBER_ID PK
+        BIGINT LOCKER_ID FK, UK
+        VARCHAR USERNAME
+    }
+
+    LOCKER {
+        BIGINT LOCKER_ID PK
+        VARCHAR NAME
+    }
+
+    MEMBER |o--o| LOCKER : ""
+```
+
+### 일대일 단방향 - 대상 테이블에 외래 키
+
+- JPA에서 지원하지 않는다.
+- 객체 간 연관관계 매핑이 불가능하다.
+
+### 일대일 양방향 - 대상 테이블에 외래 키
+
+- 방법은 `일대일 양방향 - 주 테이블에 외래 키`와 동일하다.
+- `mappedBy` 위치가 `Member`로 이동한다.
+
+```mermaid
+---
+title: 객체 연관관계
+---
+classDiagram
+    class Member {
+        +Long id
+        +String username
+        +Locker locker
+    }
+
+    class Locker {
+        +Long id
+        +String name
+        +Member member
+    }
+
+    Member ..> Locker : 일대일(1 -> 1)
+    Locker --> Member : 일대일(1 -> 1)
+```
+
+```mermaid
+---
+title: 테이블 연관관계
+---
+erDiagram
+    MEMBER {
+        BIGINT MEMBER_ID PK
+        VARCHAR USERNAME
+    }
+
+    LOCKER {
+        BIGINT LOCKER_ID PK
+        BIGINT MEMBER_ID FK, UK
+        VARCHAR NAME
+    }
+
+    MEMBER |o--o| LOCKER : ""
+```
+
+### 일대일 정리
+
+- 주 테이블에 외래 키
+  - 구조: 주 객체가 대상 객체를 참조하듯, **주 테이블에 외래 키를 둬서 대상 테이블을 조회**.
+  - 특징: 객체지향 개발자가 선호, JPA 매핑이 편리.
+  - 장점: 주 테이블만 조회해도 **대상 테이블의 데이터 존재 여부 확인 가능**.
+  - 단점: 값이 없을 경우 **외래 키에 `NULL` 허용 필요**.
+- 대상 테이블에 외래 키
+  - 구조: 대상 테이블에 외래 키를 두고 **주 테이블을 참조**.
+  - 특징: 전통적인 데이터베이스 개발자가 선호.
+  - 장점: 주 테이블과 대상 테이블을 **1:1에서 1:N으로 변경 시 테이블 구조 유지 가능**.
+  - 단점: **프록시 기능의 한계**로, 지연 로딩(`LAZY`) 설정해도 **항상 즉시 로딩(EAGER)**.
