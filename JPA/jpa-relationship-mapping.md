@@ -388,3 +388,42 @@ erDiagram
   - 특징: 전통적인 데이터베이스 개발자가 선호.
   - 장점: 주 테이블과 대상 테이블을 **1:1에서 1:N으로 변경 시 테이블 구조 유지 가능**.
   - 단점: **프록시 기능의 한계**로, 지연 로딩(`LAZY`) 설정해도 **항상 즉시 로딩(EAGER)**.
+
+## 다대다(N:M)
+
+- 관계형 데이터베이스는 **정규화된 테이블 2개만으로 다대다 관계를 표현하지 않는다**.
+- **연결 테이블을 추가하여** 1:N, N:1 관계로 변환한다.
+- 객체에서는 **컬렉션을 이용해 직접 다대다 관계를 표현한다**.
+- `@ManyToMany`를 사용하고, `@JoinTable`을 통해 **연결 테이블을 지정한다**.
+- **단방향, 양방향 매핑 모두 가능하다**.
+- **실무에서 사용하지 않는다.**
+  - **연결 테이블이 단순히 연결만 수행하지 않는다**.
+  - 대부분의 경우 **연결 테이블에 추가적인 정보(등록일, 역할 등)를 저장한다**.
+  - 따라서 `@ManyToMany`를 사용하기보다는 **연결 테이블을 엔티티로 승격하여 사용한다**.
+  - `@ManyToMany` → `@OneToMany`, `@ManyToOne` 구조로 변환한다.
+
+```mermaid
+---
+title: 테이블 연관관계
+---
+erDiagram
+    MEMBER {
+        BIGINT MEMBER_ID PK
+        VARCHAR USERNAME
+    }
+
+    PRODUCT {
+        BIGINT PRODUCT_ID PK
+        VARCHAR NAME
+    }
+
+    MEMBER_PRODUCT {
+        BIGINT MEMBER_ID PK, FK
+        BIGINT PRODUCT_ID PK, FK
+        BIGINT ORDERAMOUNT
+        TIMESTAMP ORDERDATE
+    }
+
+    MEMBER ||--o{ MEMBER_PRODUCT : ""
+    MEMBER_PRODUCT }o--|| PRODUCT : ""
+```
