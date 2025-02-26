@@ -427,3 +427,39 @@ erDiagram
     MEMBER ||--o{ MEMBER_PRODUCT : ""
     MEMBER_PRODUCT }o--|| PRODUCT : ""
 ```
+
+## 계층형 구조 매핑하기
+
+- 엔티티가 **자기 자신을 참조하는 계층 구조**를 가진 경우, `@ManyToOne`과 `@OneToMany`를 사용하여 부모-자식 관계를 매핑한다.
+- 연관관계 편의 메서드를 제공하여 **부모-자식 관계를 안전하게 설정**할 수 있도록 한다.
+
+```java
+@Entity
+public class Category {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    // 부모 카테고리 (자기 자신을 참조)
+    @ManyToOne
+    @JoinColumn(name = "PARENT_ID")
+    private Category parent;
+
+    // 자식 카테고리 리스트 (자기 자신을 참조)
+    @OneToMany(mappedBy = "parent")
+    private List<Category> child = new ArrayList<>();
+
+    // 연관관계 편의 메서드
+    public void addChildCategory(Category child) {
+        this.child.add(child);
+        child.setParent(this);
+    }
+
+    public void setParent(Category parent) {
+        this.parent = parent;
+    }
+}
+```
