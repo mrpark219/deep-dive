@@ -92,3 +92,7 @@ graph TD
 ## 다양한 연관관계 매핑
 
 [다양한 연관관계 매핑](./jpa-relationship-mapping.md)
+
+## 고급 매핑
+
+[고급 매핑](./jpa-relationship-mapping-advanced.md)
