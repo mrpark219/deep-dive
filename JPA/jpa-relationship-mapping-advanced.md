@@ -250,3 +250,43 @@ public class Movie extends Item {
     private String actor;
 }
 ```
+
+## @MappedSuperclass
+
+- 엔티티가 **공통적으로 사용하는 매핑 정보를 모을 때 사용**한다.
+- 상속 관계 매핑이 아니며, 테이블과 매핑되지 않는다.
+- 직접 조회(`em.find(BaseEntity)`)할 수 없다.
+  - `@MappedSuperclass`는 단순히 매핑 정보를 상속하는 용도로 사용되며, 엔티티가 아니기 때문에 영속성 컨텍스트에서 관리되지 않는다.
+  - 따라서 `BaseEntity` 같은 `@MappedSuperclass`를 직접 조회하거나 JPQL에서 사용할 수 없으며, 이를 상속받은 실제 엔티티(`Member` 등)만 조회 가능하다.
+- `등록일`, `수정일`, `등록자`, `수정자`와 같은 공통 속성을 정의할 때 활용한다.
+- 직접 생성해서 사용할 일이 없으므로 **추상 클래스로 정의**하는 것이 일반적이다.
+- 참고
+  - `@Entity 클래스`는 `엔티티`나 `@MappedSuperclass`로 지정한 클래스만 상속 가능하다.
+
+### 예제 코드
+
+```java
+@MappedSuperclass
+public abstract class BaseEntity {
+
+    private String createdBy;
+
+    private LocalDateTime createdDate;
+
+    private String lastModifiedBy;
+
+    private String lastModifiedDate;
+}
+```
+
+```java
+@Entity
+public class Member extends BaseEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String username;
+}
+```
