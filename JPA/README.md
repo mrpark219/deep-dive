@@ -96,3 +96,7 @@ graph TD
 ## 고급 매핑
 
 [고급 매핑](./jpa-relationship-mapping-advanced.md)
+
+## 프록시와 연관관계 정리
+
+[프록시와 연관관계 정리](./jpa-proxy-association.md)
