@@ -215,3 +215,142 @@ graph LR
 SELECT * FROM member; -- 1번 실행
 SELECT * FROM team WHERE team_id = ?; -- 멤버 수(N)만큼 실행
 ```
+
+## 영속성 전이(CASCADE)
+
+- 특정 엔티티를 **영속 상태로 만들 때**, 연관된 엔티티도 **함께 영속 상태로 만들고 싶을 때 사용**한다.
+  - 예를 들어 **부모 엔티티를 저장할 때 자식 엔티티도 함께 저장**하고 싶다면 `CASCADE`를 사용하면 된다.
+- **연관관계를 매핑하는 것과는 관련이 없으며, 단순히 편의성을 제공하는 기능**이다.
+- **부모-자식 관계에서 부모가 자식의 생명 주기를 관리할 때 적절하다.**
+  - 부모가 삭제될 때 자식도 함께 삭제되는 등 **라이프사이클이 유사한 경우 사용**하면 좋다.
+  - 예) **게시판(Board)과 첨부 파일(File)** 관계에서 부모(게시판)가 삭제될 때, 자식(첨부 파일)도 함께 삭제되는 경우.
+- **부모가 자식의 단일 소유자인 경우에 사용하면 좋다.**
+- **여러 부모가 하나의 자식을 관리하는 경우 사용하면 안 된다.**
+  - 예) **하나의 파일이 여러 개의 게시판에서 공유**되는 경우, 게시판 하나가 삭제될 때 파일이 함께 삭제되면 문제가 발생할 수 있다.
+
+### 영속성 전이 종류
+
+| 옵션    | 설명                                                    |
+| ------- | ------------------------------------------------------- |
+| ALL     | 모든 영속성 전이 옵션을 적용한다.                       |
+| PERSIST | 부모를 저장할 때만 자식도 함께 저장된다.                |
+| REMOVE  | 부모가 삭제될 때 자식도 함께 삭제된다.                  |
+| MERGE   | 부모가 병합될 때(변경 감지) 자식도 함께 병합된다.       |
+| REFRESH | 부모가 `refresh()` 호출될 때 자식도 함께 반영된다.      |
+| DETACH  | 부모가 `detach()` 될 때 자식도 함께 준영속 상태가 된다. |
+
+**실무에서는 `ALL`, `PERSIST`, `REMOVE`를 주로 사용한다.**
+
+### 예제 코드
+
+```java
+@Entity
+public class Parent {
+
+    @Id @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    @OneToMany(mappedBy="parent", cascasde=CascadeType.PERSIST) // 영속성 전이 설정
+    private List<Child> childList = new ArrayList<>();
+
+    public void addChild(Child child) {
+        childList.add(child);
+        child.setParent(this);
+    }
+}
+```
+
+```java
+@Entity
+public class Child {
+
+    @Id @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    @ManyToOne
+    @JoinColumn(name="parent_id")
+    private Parent parent;
+
+    public void setParent(Parent parent) {
+        this.parent = parent
+    }
+}
+```
+
+## 고아 객체
+
+- 부모 엔티티와 **연관관계가 끊어진 자식 엔티티**를 의미한다.
+
+### 고아 객체 제거
+
+- 부모 엔티티와의 연관관계가 끊어져 **고아 객체가 된(참조가 제거된) 자식 엔티티를 자동으로 삭제**하는 기능이다.
+
+```java
+@Entity
+public class Parent {
+
+    @Id @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    @OneToMany(mappedBy="parent", cascasde=CascadeType.ALL, orphanRemoval = true) // 고아 객체 제거 설정
+    private List<Child> childList = new ArrayList<>();
+
+    public void addChild(Child child) {
+        childList.add(child);
+        child.setParent(this);
+    }
+
+    public List<Child> getChildList() {
+		return childList;
+	}
+}
+```
+
+```java
+@Entity
+public class Child {
+
+    @Id @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    @ManyToOne
+    @JoinColumn(name="parent_id")
+    private Parent parent;
+
+    public void setParent(Parent parent) {
+        this.parent = parent
+    }
+}
+```
+
+```java
+Parent parent = em.find(Parent.class, id);
+parent.getChildList().remove(0); // DELETE FROM CHILD WHERE ID = ? 실행
+```
+
+### 고아 객체 삭제 기능 주의사항
+
+- **참조하는 곳이 하나일 때만 사용해야 한다.**
+- **특정 엔티티가 개인 소유할 때만 사용해야 한다.**
+- **`@OneToOne`, `@OneToMany` 관계에서만 적용 가능하다.**
+- **고아 객체 제거 기능을 활성화하면, 부모를 제거할 때 자식도 함께 제거된다.**(`CascadeType.REMOVE`와 동일한 동작)
+
+## 영속성 전이 + 고아 객체, 생명 주기
+
+- 스스로 생명주기를 관리하는 엔티티는 `em.persist()`로 영속화하고, `em.remove()`로 제거하며 생명주기를 직접 관리할 수 있다.
+- **`CascadeType.ALL`과 `orphanRemoval = true`를 설정하면, 부모 엔티티를 통해 자식의 생명 주기를 관리할 수 있다.**
+- 도메인 주도 설계(DDD)의 Aggregate Root 개념을 구현할 때 유용하다.
+
+### Aggregate Root
+
+- Aggregate는 시스템이 기대하는 책임을 수행하면서 일관성을 유지하는 단위로, 명령을 수행하기 위해 함께 조회되고 업데이트해야 하는 최소 단위이다.
+- Aggregate 내부의 연관된 엔티티들은 **Aggregate Root를 통해서만 접근 및 관리**할 수 있다.
+- Aggregate Root가 삭제되면, **연관된 엔티티들도 함께 삭제되는 규칙을 적용**할 수 있다.
