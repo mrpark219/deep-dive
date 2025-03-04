@@ -100,3 +100,7 @@ graph TD
 ## 프록시와 연관관계 정리
 
 [프록시와 연관관계 정리](./jpa-proxy-association.md)
+
+## 값 타입
+
+[값 타입](./jpa-value-type.md)
