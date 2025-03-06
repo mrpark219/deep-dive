@@ -300,3 +300,58 @@ b.setCity("New");
   - Integer, String은 자바가 제공하는 대표적인 불변 객체이며, Setter가 없다.
 - 불변이라는 작은 제약을 통해 부작용이라는 큰 문제를 막을 수 있다.
   - 값을 변경하려면 새로운 객체를 생성해야 하므로, 기존 객체가 변경되지 않아 안전하다.
+
+## 값 타입의 비교
+
+### 동일성(identity) 비교
+
+- **인스턴스의 참조 값을 비교하는 방식**이다.
+- **`==` 연산자를 사용하여 비교**한다.
+- 같은 메모리 주소를 가리킬 때만 동일하다고 판단한다.
+
+### 동등성(equivalence) 비교
+
+- **인스턴스가 가지고 있는 값을 비교하는 방식**이다.
+- **`equals()` 메서드를 사용하여 비교**한다.
+  - JPA에서 프록시를 사용하는 경우, `equals()` 내부 구현 시 필드에 직접 접근하지 않고 getter를 호출해야 한다.  
+    (프록시 객체는 실제 엔티티가 아니라 가짜 객체이므로, 직접 필드에 접근하면 원하는 값이 없을 수도 있다.)
+
+### 값 타입의 비교
+
+- **값 타입은 인스턴스가 달라도 내부 값이 같으면 같은 것으로 간주해야 한다.**
+  - **값 타입은 `==` 연산자가 아니라 `a.equals(b)`를 사용해 동등성 비교를 해야 한다.**
+- **값 타입의 `equals()` 메서드를 적절하게 재정의해야 한다.**
+  - 보통 모든 필드를 포함하여 비교하도록 `equals()`를 구현한다.
+
+```java
+int a = 10;
+int b = 10;
+
+System.out.println("a == b: " + (a == b)); // true
+```
+
+```java
+class Address {
+
+  private String city;
+
+  public test() {}
+
+  public test(String city) {
+    this.city = city;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if(o == null || getClass() != o.getClass()) return false;
+    test test = (test) o;
+    return Objects.equals(city, test.city);
+  }
+}
+
+Address a = new Address("TEST");
+Address b = new Address("TEST");
+
+System.out.println("a == b: " + (a == b)); // false
+System.out.println("a.equals(b): " + (a.equals(b))); // true
+```
