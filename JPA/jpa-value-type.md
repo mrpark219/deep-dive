@@ -355,3 +355,131 @@ Address b = new Address("TEST");
 System.out.println("a == b: " + (a == b)); // false
 System.out.println("a.equals(b): " + (a.equals(b))); // true
 ```
+
+## 값 타입 컬렉션
+
+- 값 타입을 하나 이상 저장할 때 사용한다.
+- 데이터베이스는 컬렉션을 같은 테이블에 저장할 수 없기 때문에, **별도의 테이블이 필요**하다.
+- `@ElementCollection`, `@CollectionTable`을 사용하여 매핑한다.
+- 값 타입 컬렉션은 기본적으로 **지연 로딩(Lazy Loading) 전략**을 사용한다.
+- 값 타입 컬렉션은 **영속성 전이(Cascade) + 고아 객체 제거 기능을 기본적으로 제공**한다.
+
+### 값 타입 컬렉션 예제
+
+```mermaid
+classDiagram
+  class Member {
+      Long id
+      Set~String~ favoriteFoods
+      List~Address~ addressHistory
+  }
+```
+
+```mermaid
+erDiagram
+    MEMBER {
+        BIGINT MEMBER_ID PK
+    }
+
+    FAVORITE_FOOD {
+        BIGINT MEMBER_ID PK,FK
+        VARCHAR FOOD_NAME PK
+    }
+
+    ADDRESS {
+      BIGINT MEMBER_ID PK, FK
+      VARCHAR CITY PK
+      VARCHAR STREET PK
+      VARCHAR ZIPCODE PK
+    }
+
+    MEMBER ||--o{ FAVORITE_FOOD : ""
+    MEMBER ||--o{ ADDRESS : ""
+```
+
+```java
+@Entity
+public class Member {
+
+  @Id @GeneratedValue
+  @Column(name = "MEMBER_ID")
+  private Long id;
+
+  @ElementCollection
+  @CollectionTable(name = "FAVOTITE_FOOD", joinColumns = @JoinColumn(name = "MEMBER_ID"))
+  @Column(name = "FOOD_NAME")
+  private Set<String> favoriteFoods = new HashSet<>();
+
+  @ElementCollection
+  @CollectionTable(name = "ADDRESS", joinColumns = @JoinColumn(name = "MEMBER_ID"))
+  private List<Address> addressHistory = new ArrayList<>();
+}
+```
+
+### 값 타입 컬렉션 예제 - 저장
+
+```java
+Member member = new Member();
+
+member.getFavoriteFoods().add("치킨");
+member.getFavoriteFoods().add("피자");
+
+member.getAddressHistory().add(new Address("city1", "street1", "zipcode1"));
+member.getAddressHistory().add(new Address("city2", "street2", "zipcode2"));
+
+em.persist(member);
+```
+
+### 값 타입 컬렉션 예제 - 조회
+
+```java
+Member findMember = em.find(Member.class, member.getId()); // 지연로딩
+```
+
+### 값 타입 컬렉션 예제 - 수정
+
+```java
+Member findMember = em.find(Member.class, member.getId());
+
+// favoriteFoods 안에 있는 치킨을 한식으로 변경
+findMember.getFavoriteFoods().remove("치킨");
+findMember.getFavoriteFoods().add("한식");
+
+// addressHistory 안에 있는 city1을 city3로 변경
+findMember.getAddressHistory().remove(new Address("city1", "street1", "zipcode1")); // equals 구현 필수 - remove 안에서 equals로 동일한 객체를 삭제한다.
+findMember.getAddressHistory().add(new Address("city3", "street3", "zipcode3"));
+```
+
+### 값 타입 컬렉션의 제약사항
+
+- 값 타입은 엔티티와 다르게 식별자 개념이 없다.
+- 값을 변경하면 추적이 어렵다.
+- 값 타입 컬렉션에 변경 사항이 발생하면, 기존 데이터를 모두 삭제하고 새로운 데이터를 다시 저장한다.
+  - 예를 들어 [값 타입 컬렉션 예제 - 수정](#값-타입-컬렉션-예제---수정)에서 `addressHistory` 컬렉션에서 `city1`을 `city3`으로 변경하면, 기존 데이터를 삭제한 후 새로운 값으로 다시 저장한다.
+- 값 타입 컬렉션을 매핑하는 테이블은 **모든 컬럼을 묶어 기본 키를 구성**해야 한다.
+  - **null 입력과 중복 저장이 허용되지 않는다**.
+
+### 값 타입 컬렉션 대안
+
+- 실무에서는 값 타입 컬렉션 대신 일대다 관계를 고려하는 경우가 많다.
+- 일대다 관계를 위한 엔티티를 만들고, 여기에서 값 타입을 사용한다.
+- 영속성 전이(Cascade) + 고아 객체 제거 기능을 사용하여 값 타입 컬렉션처럼 활용할 수 있다.
+  - 예를 들어 `Address`를 값 타입이 아닌 엔티티로 만들고, **일대다 관계**를 맺어 사용하는 방식이다.
+
+### 엔티티 타입과 값 타입 비교
+
+- 엔티티 타입의 특징
+  - 식별자가 존재한다.
+  - 생명 주기를 독립적으로 관리할 수 있다
+  - 공유해도 문제가 없다.
+- 값 타입의 특징
+  - 식별자가 없다.
+  - 생명 주기를 엔티티에 의존한다.
+  - 공유하지 않는 것이 안전하다. (값을 복사해서 사용한다.)
+  - 불변 객체로 설계하는 것이 안전하다.
+
+### 엔티티와 값 타입의 구분
+
+- 값 타입은 정말 "값"으로만 사용될 때만 적용해야 한다.
+- 엔티티와 값 타입을 혼동하면, 엔티티를 값 타입으로 잘못 설계할 위험이 있다.
+- **식별자가 필요하고, 지속적으로 값을 추적하거나 변경해야 한다면, 그것은 값 타입이 아니라 엔티티로 만들어야 한다**.
