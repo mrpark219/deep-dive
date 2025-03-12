@@ -7,3 +7,7 @@
 ## 2. URI와 웹 브라우저 요청 흐름
 
 [URI와 웹 브라우저 요청 흐름](./http-uri-and-browser-request-flow.md)
+
+## 3. HTTP 기본
+
+[HTTP 기본](./http-basics.md)
