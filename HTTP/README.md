@@ -11,3 +11,7 @@
 ## 3. HTTP 기본
 
 [HTTP 기본](./http-basics.md)
+
+## 4. HTTP 메서드
+
+[HTTP 메서드](./http-method.md)
