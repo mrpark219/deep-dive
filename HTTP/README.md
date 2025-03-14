@@ -15,3 +15,7 @@
 ## 4. HTTP 메서드
 
 [HTTP 메서드](./http-method.md)
+
+## 5. HTTP 메서드 활용
+
+[HTTP 메서드 활용](./http-methods-usage.md)
