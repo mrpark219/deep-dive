@@ -19,3 +19,7 @@
 ## 5. HTTP 메서드 활용
 
 [HTTP 메서드 활용](./http-methods-usage.md)
+
+## 6. HTTP 상태 코드
+
+[HTTP 상태 코드](./http-status-codes.md)
