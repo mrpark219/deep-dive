@@ -23,3 +23,7 @@
 ## 6. HTTP 상태 코드
 
 [HTTP 상태 코드](./http-status-codes.md)
+
+## 7. HTTP 헤더 - 일반
+
+[HTTP 헤더 - 일반](./http-general-header.md)
