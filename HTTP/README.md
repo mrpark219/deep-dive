@@ -27,3 +27,7 @@
 ## 7. HTTP 헤더 - 일반
 
 [HTTP 헤더 - 일반](./http-general-header.md)
+
+## 8. HTTP 헤더 - 캐시와 조건부 요청
+
+[HTTP 헤더 - 캐시와 조건부 요청](./http-cache-conditional-request-header.md)
