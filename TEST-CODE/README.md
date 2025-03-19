@@ -55,3 +55,7 @@
 ## 3. TDD(Test Driven Development)
 
 [TDD](./tdd.md)
+
+## 4. 테스트 문서화하기
+
+[테스트 문서화하기](./documenting-tests.md)
