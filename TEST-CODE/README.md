@@ -59,3 +59,7 @@
 ## 4. 테스트 문서화하기
 
 [테스트 문서화하기](./documenting-tests.md)
+
+## 5. Spring & JPA 기반 테스트
+
+[Spring & JPA 기반 테스트](./spring-jpa-test-code.md)
