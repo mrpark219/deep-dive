@@ -42,3 +42,73 @@
 - **여러 모듈이 협력하는 기능을 통합적으로 검증한다**.
 - 단위 테스트만으로는 **기능 전체의 신뢰성을 보장할 수 없기 때문에 통합 테스트가 필요하다**.
 - **풍부한 단위 테스트와 함께, 큰 기능 단위를 검증하는 통합 테스트가 병행되어야 한다**.
+
+## 3. Persistence Layer
+
+- Data Access의 역할을 담당하는 레이어이다.
+- 비즈니스 가공 로직이 포함되지 않고, 데이터의 CRUD에만 집중해야 한다.
+
+### 3.1 @SpringBootTest VS @DataJpaTest
+
+- **`@SpringBootTest`**: 스프링 애플리케이션 전체를 로드하여 테스트를 수행한다.
+- **`@DataJpaTest`**: JPA 관련 빈들만 로드하여 테스트를 수행하며, 실행 속도가 `@SpringBootTest`보다 빠르다.
+- **`@DataJpaTest`는 `@Transactional`을 포함하고 있어 각 테스트가 실행 후 자동으로 롤백된다**.
+- **`@SpringBootTest`는 롤백되지 않으므로 이전 테스트가 다음 테스트에 영향을 줄 수 있다**.
+
+## 3.2 Persistence Layer Test
+
+- JPA 관련된 빈만 로딩하여 Repository를 테스트하는 코드이다.
+- 판매 상태에 따라 상품을 조회하는 테스트를 수행한다.
+
+```java
+@ActiveProfiles("test")
+@DataJpaTest // JPA 관련 빈들만 로딩하기 때문에 속도가 @SpringBootTest에 비해 빠르다.
+class ProductRepositoryTest {
+
+    @Autowired
+    private ProductRepository productRepository;
+
+    @DisplayName("원하는 판매상태를 가진 상품들을 조회한다.")
+    @Test
+    void findAllBySellingStatusIn() {
+
+        // given
+        Product product1 = Product.builder()
+                .productNumber("001")
+                .type(HANDMADE)
+                .sellingStatus(SELLING)
+                .name("아메리카노")
+                .price(4000)
+                .build();
+
+        Product product2 = Product.builder()
+                .productNumber("002")
+                .type(HANDMADE)
+                .sellingStatus(HOLD)
+                .name("카페라떼")
+                .price(4500)
+                .build();
+
+        Product product3 = Product.builder()
+                .productNumber("003")
+                .type(HANDMADE)
+                .sellingStatus(STOP_SELLING)
+                .name("팥빙수")
+                .price(7000)
+                .build();
+
+        productRepository.saveAll(List.of(product1, product2, product3));
+
+        // when
+        List<Product> products = productRepository.findAllBySellingStatusIn(List.of(SELLING, HOLD));
+
+        // then
+        assertThat(products).hasSize(2)
+            .extracting("productNumber", "name", "sellingStatus")
+            .containsExactlyInAnyOrder(
+                    tuple("001", "아메리카노", SELLING),
+                    tuple("002", "카페라떼", HOLD)
+            );
+    }
+}
+```
