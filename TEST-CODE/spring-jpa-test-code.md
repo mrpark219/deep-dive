@@ -112,3 +112,69 @@ class ProductRepositoryTest {
     }
 }
 ```
+
+## 4. Business Layer
+
+- **비즈니스 로직을 구현하는 레이어이다**.
+- Persistence Layer와 상호작용하며 데이터를 읽고 쓰는 행위를 통해 **비즈니스 로직을 전개한다**.
+- **트랜잭션을 보장해야 하는 중요한 책임을 가진다**.
+- **Service Test는 Business Layer와 Persistence Layer를 함께 통합적으로 테스트한다**.
+- 서비스 테스트 코드에서 `@Transactional`을 사용하는 경우, 실제 운영 서비스 코드에서는 해당 어노테이션이 없어도 테스트 환경에서는 **있는 것처럼 동작할 수 있다**.
+
+```java
+@ActiveProfiles("test")
+@SpringBootTest
+class OrderServiceTest {
+
+    @Autowired
+    private ProductRepository productRepository;
+
+    @Autowired
+    private OrderService orderService;
+
+    @DisplayName("주문번호 리스트를 받아 주문을 생성한다.")
+    @Test
+    void createOrder() {
+
+        // given
+        LocalDateTime registeredDateTime = LocalDateTime.now();
+
+        Product product1 = createProduct(HANDMADE, "001", 1000);
+        Product product2 = createProduct(HANDMADE, "002", 3000);
+        Product product3 = createProduct(HANDMADE, "003", 5000);
+
+        productRepository.saveAll(List.of(product1, product2, product3));
+
+        OrderCreateRequest request = OrderCreateRequest.builder()
+                .productNumbers(List.of("001", "002"))
+                .build();
+
+        // when
+        OrderResponse orderResponse = orderService.createOrder(request, registeredDateTime);
+
+        // then
+        assertThat(orderResponse.getId()).isNotNull();
+        assertThat(orderResponse)
+                .extracting("registeredDateTime", "totalPrice")
+                .contains(registeredDateTime, 4000);
+
+        assertThat(orderResponse.getProducts()).hasSize(2)
+                .extracting("productNumber", "price")
+                .containsExactlyInAnyOrder(
+                        tuple("001", 1000),
+                        tuple("002", 3000)
+                );
+
+    }
+
+    private Product createProduct(ProductType type, String productNumber, int price) {
+        return Product.builder()
+                .type(type)
+                .productNumber(productNumber)
+                .price(price)
+                .sellingStatus(SELLING)
+                .name("메뉴 이름")
+                .build();
+    }
+}
+```
