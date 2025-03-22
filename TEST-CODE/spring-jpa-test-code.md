@@ -178,3 +178,81 @@ class OrderServiceTest {
     }
 }
 ```
+
+## 5. Presentation Layer
+
+- **외부 세계의 요청을 가장 먼저 받는 계층이다**.
+- 요청 파라미터에 대한 **기본적인 검증만 수행하고**, 비즈니스 로직 처리는 Service 계층에 위임한다.
+- 이 레이어에서는 주로 **Controller를 테스트하며**, 테스트 시 Business Layer와 Persistence Layer는 **Mocking**하여 독립적으로 검증한다.
+
+### 5.1 MockMvc
+
+- **Mock(가짜) 객체를 사용해 스프링 MVC 동작을 재현할 수 있는 테스트 프레임워크다**.
+- 테스트 환경에서 **가짜(Mock) 객체**를 주입하여 복잡한 의존성을 제거하고, **Controller의 요청/응답 흐름을 독립적으로 테스트**할 수 있다.
+- `@WebMvcTest` 어노테이션과 함께 사용하면 **Controller만 로딩된 테스트 환경**을 구성할 수 있다.
+- HTTP 요청을 흉내내고 JSON 요청/응답, 상태 코드, 헤더, 본문 등을 검증할 수 있다.
+
+### 5.2 @MockBean
+
+- **스프링 테스트 컨텍스트(ApplicationContext)에 Mock 객체를 등록해주는 어노테이션이다**.
+- 테스트 대상 클래스가 의존하고 있는 Bean을 **가짜(Mock) 객체로 교체하여 주입할 수 있다**.
+- 일반적으로 `@WebMvcTest`, `@SpringBootTest` 등과 함께 사용되며, **의존성 주입이 필요한 곳에 테스트 전용 Mock 객체를 사용하게 해준다**.
+- 기존에 등록된 동일한 타입의 Bean이 있다면, **`@MockBean`이 이를 대체한다**.
+
+```java
+@WebMvcTest(controllers = ProductController.class)
+class ProductControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @MockBean
+    private ProductService productService;
+
+    @DisplayName("신규 상품을 등록한다.")
+    @Test
+    void createProduct() throws Exception {
+
+        // given
+        ProductCreateRequest request = ProductCreateRequest.builder()
+            .type(ProductType.HANDMADE)
+            .sellingStatus(ProductSellingStatus.SELLING)
+            .name("아메리카노")
+            .price(4000)
+            .build();
+
+        // when
+        // then
+        mockMvc.perform(
+                post("/api/v1/products/new")
+                    .content(objectMapper.writeValueAsString(request))
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(print())
+            .andExpect(status().isOk());
+    }
+
+    @DisplayName("판매 상품을 조회한다.")
+    @Test
+    void getSellingProducts() throws Exception {
+        // given
+        List<ProductResponse> result = List.of();
+        when(productService.getSellingProducts()).thenReturn(result);
+
+        // when
+        // then
+        mockMvc.perform(
+                get("/api/v1/products/selling")
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value("200"))
+            .andExpect(jsonPath("$.status").value("OK"))
+            .andExpect(jsonPath("$.message").value("OK"))
+            .andExpect(jsonPath("$.data").isArray());
+    }
+}
+```
