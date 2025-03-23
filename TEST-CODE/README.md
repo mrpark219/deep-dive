@@ -63,3 +63,7 @@
 ## 5. Spring & JPA 기반 테스트
 
 [Spring & JPA 기반 테스트](./spring-jpa-test-code.md)
+
+## 6. Mock
+
+[Mock](./mock.md)
