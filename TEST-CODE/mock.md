@@ -77,3 +77,59 @@ class OrderStatisticsServiceTest {
     }
 }
 ```
+
+## 2. Mockito만으로 테스트 실행하기
+
+### 2.1 @Mock
+
+- 의존하는 객체를 **가짜(Mock) 객체로 생성**한다.
+- 객체의 동작을 원하는 방식으로 설정할 수 있으며, 실제 동작은 수행되지 않는다.
+
+### 2.2 @InjectMocks
+
+- 테스트 대상 객체를 생성하고, @Mock으로 생성한 객체들을 주입해준다.
+- 생성자, 세터, 필드 등을 통해 주입된다.
+
+### 2.3 @ExtendWith(MockitoExtension.class)
+
+- JUnit 5 환경에서 Mockito를 사용하기 위한 설정이다.
+- Mockito 관련 어노테이션(@Mock, @InjectMocks 등)을 사용할 수 있도록 해준다.
+
+### 2.4 @Spy
+
+- 실제 객체를 기반으로 일부 동작만 Stub(가짜) 처리할 수 있는 객체를 생성한다.
+- 실체 객체가 필요하지만 특정 메서드만 모킹하고 싶을 때 사용한다.
+
+### 2.5 예제 코드
+
+```java
+@ExtendWith(MockitoExtension.class)
+class MailServiceTest {
+
+    @Spy
+    private MailSendClient mailSendClient;
+
+    @Mock
+    private MailSendHistoryRepository mailSendHistoryRepository;
+
+    @InjectMocks
+    private MailService mailService;
+
+    @DisplayName("메일 전송 테스트")
+    @Test
+    void sendMail() {
+
+        doReturn(true)
+            .when(mailSendClient)
+            .sendEmail(anyString(), anyString(), anyString(), anyString());
+
+        // when
+        boolean result = mailService.sendMail("", "", "", "");
+
+        // then
+        assertThat(result).isTrue();
+
+        verify(mailSendHistoryRepository, times(1)).save(any(MailSendHistory.class));
+    }
+}
+```
