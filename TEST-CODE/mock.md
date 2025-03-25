@@ -133,3 +133,29 @@ class MailServiceTest {
     }
 }
 ```
+
+## 3. BDDMockito
+
+- 기존 Mockito는 given에 해당하는 부분에 `when()` 메서드를 사용하기 때문에 BDD 스타일과 맞지 않다.
+- BDDMockito는 `when()` 대신 `given()`이라는 메서드를 제공하여 **BDD 스타일에 맞는 테스트 코드를 작성할 수 있다**.
+
+### 3.1 예제 코드
+
+```java
+@DisplayName("메일 전송 테스트")
+@Test
+void sendMail() {
+
+    // given
+    BDDMockito.given(mailSendClient.sendEmail(anyString(), anyString(), anyString(), anyString()))
+        .willReturn(true);
+
+    // when
+    boolean result = mailService.sendMail("", "", "", "");
+
+    // then
+    assertThat(result).isTrue();
+
+    verify(mailSendHistoryRepository, times(1)).save(any(MailSendHistory.class));
+}
+```
