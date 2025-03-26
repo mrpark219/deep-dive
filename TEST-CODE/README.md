@@ -67,3 +67,7 @@
 ## 6. Mock
 
 [Mock](./mock.md)
+
+## 7. 효율적인 테스트 작성 방법
+
+[효율적인 테스트 작성 방법](./test-best-practices.md)
