@@ -338,3 +338,80 @@ Collection<DynamicTest> stockDeductionDynamicTest() {
     );
 }
 ```
+
+## 9. 테스트 환경 통합하기 (테스트 수행 시간 줄이기)
+
+- 테스트를 수행할 때마다 **스프링 서버가 매번 재시작되면 전체 테스트 실행 시간이 증가하게 된다**.
+- 테스트 실행 시간이 곧 **비용**이 되기 때문에, 이를 최소화하기 위해 **테스트 환경을 통합**해야 한다.
+- **서버가 재시작되지 않도록 환경 설정을 일관성 있게 유지하고, 테스트 구조를 설계하는 것이 중요하다**.
+
+### 9.1 Service, Repository Test 통합하기
+
+- **@MockBean의 유무**, **@ActiveProfiles 설정** 등에 따라 **서버가 매번 새롭게 기동될 수 있다**.
+- 이를 방지하기 위해 **공통 설정을 추상 클래스(부모 클래스)로 분리**하여 관리한다.
+
+#### 9.1.1 MockBean 처리 통합
+
+- 공통 테스트 환경 설정 클래스를 만들고, 필요한 `@MockBean`을 `protected`로 선언하여 다른 서비스 테스트 클래스들이 상속받아 사용할 수 있도록 한다.
+- 해당 모킹 설정이 **여러 테스트 클래스에서 공통적으로 사용될 수 있는 경우**에 적절하다.
+
+```java
+@ActiveProfiles("test")
+@SpringBootTest
+public abstract class IntegrationTestSupport {
+
+    @MockBean
+    protected MailSendClient mailSendClient;
+}
+```
+
+#### 9.1.2 MockBean 유무에 따라 테스트를 분리
+
+- `@MockBean`을 사용하는 테스트와 사용하지 않는 테스트를 **완전히 다른 테스트 클래스로 분리**하여 각각 독립적으로 실행되도록 한다.
+- **테스트 격리가 필요한 경우**에 적절하다.
+
+### 9.2 Controller Test 통합하기
+
+- `@WebMvcTest`는 스프링 MVC 계층만 로드하기 때문에 빠른 테스트 실행이 가능하다.
+- 하지만 필요한 의존 객체들을 `@MockBean`으로 직접 주입해주어야 한다.
+- 마찬가지로 테스트 환경 통합을 위해 공통 컨트롤러 테스트 설정 클래스를 추상 클래스로 분리한다.
+- 아래 예시의 `ControllerTestSupport`를 상속받아 개별 테스트를 작성하면 Controller 테스트 간 설정이 재사용되고, 서버 재시작 없이 빠른 테스트 실행이 가능하다.
+
+```java
+@WebMvcTest(controllers = {
+    OrderController.class,
+    ProductController.class
+})
+public abstract class ControllerTestSupport {
+
+    @Autowired
+    protected MockMvc mockMvc;
+
+    @Autowired
+    protected ObjectMapper objectMapper;
+
+    @MockBean
+    protected OrderService orderService;
+
+    @MockBean
+    protected ProductService productService;
+}
+```
+
+## 10. private 메서드의 테스트
+
+- **private 메서드는 테스트할 필요가 없다**. 그리고 **테스트해서도 안 된다**.
+- **private 메서드를 테스트하고 싶은 상황이 왔다면 객체의 책임이 너무 많거나 응집도가 낮은 설계일 가능성이 크다**.
+- 외부에서 객체를 사용할 때 바라보는 대상은 **public 메서드**이다.
+  - 즉, 객체의 기능을 외부에 드러내는 방식은 public 메서드이며, 테스트 대상도 마찬가지다.
+- 일반적으로 **public 메서드를 테스트하면서 간접적으로 private 메서드도 함께 테스트된다**.
+- 만약 특정 private 메서드의 테스트가 필요할 정도로 복잡하거나 중요한 로직이 있다면, **그 책임을 별도의 객체로 분리하여 public 메서드로 테스트가 가능하게 만들어야 한다**.
+
+## 11. 테스트에서만 필요한 메서드가 생겼는데 프로덕션 코드에서는 필요 없다면?
+
+- **테스트를 위해 메서드를 추가하는 것은 가능하다**. 하지만 **보수적으로 접근해야 한다**.
+- 빌더, Getter, 생성자 등 **객체를 구성하거나 값을 확인하는 데 필요한 메서드는 테스트 목적이라도 만들어도 괜찮다**.
+- 다만 테스트를 위해서만 존재하는 **복잡한 로직의 메서드나 도메인 규칙을 위반하는 메서드는 지양해야 한다**.
+- **해당 메서드가 미래에도 사용될 가능성이 있거나 도메인 모델을 해치지 않는다면 추가해도 무방하다**.
+- 예를 들어 객체 내부 상태를 조회하는 `getQuantity()` 같은 메서드는 테스트 목적이더라도 충분히 허용된다.
+- 하지만 `setQuantity()`처럼 외부에서 객체 상태를 쉽게 바꾸게 만드는 메서드는 도메인 규칙에 어긋날 수 있기 때문에 주의해야 한다.
