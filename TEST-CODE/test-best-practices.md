@@ -257,7 +257,7 @@ void containsStockTypeParameterized1(ProductType productType, boolean expected) 
 }
 ```
 
-### 7.3 @MethodSource
+### 7.2 @MethodSource
 
 - 복잡한 로직이나 여러 줄의 인자를 구성해야 하는 경우, 메서드에서 인자들을 반환받아 주입하는 방식이다.
 - 동적 생성이나 조건부 조합이 필요할 때 유용하게 사용할 수 있다.
