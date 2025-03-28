@@ -71,3 +71,7 @@
 ## 7. 효율적인 테스트 작성 방법
 
 [효율적인 테스트 작성 방법](./test-best-practices.md)
+
+## 8. 예제 코드
+
+[깃허브](https://github.com/mrpark219/testcode-study)
