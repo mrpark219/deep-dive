@@ -1,0 +1,6 @@
+{
+    "pasteImage.basePath": "${currentFileDir}",
+    "pasteImage.path": "${currentFileDir}/images/${currentFileNameWithoutExt}/",
+    "pasteImage.prefix": "./",
+    "editor.formatOnSave": true
+}
