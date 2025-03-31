@@ -7,3 +7,7 @@
 ## 2. Service Discovery
 
 [Service Discovery](./service-discovery.md)
+
+## 3. API Gateway Service
+
+[API Gateway Service](./api-gateway-service.md)
