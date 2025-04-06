@@ -11,3 +11,7 @@
 ## 3. API Gateway Service
 
 [API Gateway Service](./api-gateway-service.md)
+
+## 4. Configuration Service
+
+[Configuration Service](./configuration-service.md)
