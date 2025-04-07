@@ -15,3 +15,7 @@
 ## 4. Configuration Service
 
 [Configuration Service](./configuration-service.md)
+
+## 5. Spring Cloud Bus
+
+[Spring Cloud Bus](./spring-cloud-bus.md)
