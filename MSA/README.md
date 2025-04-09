@@ -19,3 +19,7 @@
 ## 5. Spring Cloud Bus
 
 [Spring Cloud Bus](./spring-cloud-bus.md)
+
+## 6. 설정 정보의 암호화 처리
+
+[설정 정보의 암호화 처리](./spring-cloud-config-encryption.md)
