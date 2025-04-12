@@ -23,3 +23,7 @@
 ## 6. 설정 정보의 암호화 처리
 
 [설정 정보의 암호화 처리](./spring-cloud-config-encryption.md)
+
+## 7. Microservice간 통신
+
+[Microservice간 통신](./microservices-communication.md)
