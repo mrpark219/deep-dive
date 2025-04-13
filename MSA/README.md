@@ -27,3 +27,7 @@
 ## 7. Microservice간 통신
 
 [Microservice간 통신](./microservices-communication.md)
+
+## 8. 데이터 동기화를 위한 Kafka 활용
+
+[데이터 동기화를 위한 Kafka 활용](./data-sync-with-kafka.md)
