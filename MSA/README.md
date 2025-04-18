@@ -31,3 +31,7 @@
 ## 8. 데이터 동기화를 위한 Kafka 활용
 
 [데이터 동기화를 위한 Kafka 활용](./data-sync-with-kafka.md)
+
+## 9. 장애 처리와 Microservice 분산 추적
+
+[장애 처리와 Microservice 분산 추적](./msa-error-handling-and-tracing.md)
