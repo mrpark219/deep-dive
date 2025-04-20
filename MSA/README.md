@@ -35,3 +35,7 @@
 ## 9. 장애 처리와 Microservice 분산 추적
 
 [장애 처리와 Microservice 분산 추적](./msa-error-handling-and-tracing.md)
+
+## 10. Microservice 모니터링
+
+[Microservice 모니터링](./microservice-monitoring.md)
