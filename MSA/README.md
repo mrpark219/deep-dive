@@ -39,3 +39,7 @@
 ## 10. Microservice 모니터링
 
 [Microservice 모니터링](./microservice-monitoring.md)
+
+## 11. 애플리케이션 배포를 위한 컨테이너 가상화
+
+[애플리케이션 배포를 위한 컨테이너 가상화](./containerization-for-deployment.md)
