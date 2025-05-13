@@ -50,4 +50,4 @@
 
 ## 13. Kubernetes 기본 개념
 
-[Kubernetes 기본 개념](./)
+[Kubernetes 기본 개념](./kubernetes-basics.md)
