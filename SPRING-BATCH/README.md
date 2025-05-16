@@ -65,3 +65,7 @@
 ## 8. ItemProcessor
 
 [ItemProcessor](./itemProcessor.md)
+
+## 9. 병렬 처리
+
+[병렬 처리](./scaling-parallel-processing.md)
