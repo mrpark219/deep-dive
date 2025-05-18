@@ -69,3 +69,7 @@
 ## 9. 병렬 처리
 
 [병렬 처리](./scaling-parallel-processing.md)
+
+## 10. 반복
+
+[반복](./repeat.md)
