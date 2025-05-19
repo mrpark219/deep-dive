@@ -10,6 +10,7 @@
 | [HTTP](./HTTP/README.md)                 | `2025-03-10` ~ `2025-03-17` |
 | [Test Code](./TEST-CODE/README.md)       | `2025-03-18` ~ `2025-03-27` |
 | [MSA(Spring Cloud)](./MSA/README.md)     | `2025-03-28` ~ `2025-05-08` |
-| [Spring Batch](./SPRING-BATCH/README.md) | `2025-05-09` ~ `Present`    |
+| [Spring Batch](./SPRING-BATCH/README.md) | `2025-05-09` ~ `2025-05-18` |
+| [Clean Code](./CLEAN-CODE/README.md)     | `2025-05-19` ~ `Present`    |
 
 추후 새로운 주제를 추가하면서 업데이트할 예정입니다. 🚀
