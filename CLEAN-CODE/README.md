@@ -5,3 +5,7 @@
 ## 1. 깨끗한 코드
 
 [깨끗한 코드](./clean-code.md)
+
+## 2. 의미 있는 이름
+
+[의미 있는 이름](./meaningful-names.md)
