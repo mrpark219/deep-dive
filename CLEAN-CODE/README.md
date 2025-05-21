@@ -9,3 +9,7 @@
 ## 2. 의미 있는 이름
 
 [의미 있는 이름](./meaningful-names.md)
+
+## 3. 함수
+
+[함수](./functions.md)
