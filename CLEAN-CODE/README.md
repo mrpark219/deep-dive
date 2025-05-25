@@ -21,3 +21,7 @@
 ## 5. 형식 맞추기
 
 [형식 맞추기](./formatting.md)
+
+## 6. 객체와 자료 구조
+
+[객체와 자료 구조](./objects-and-data-structures.md)
