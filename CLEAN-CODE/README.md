@@ -25,3 +25,7 @@
 ## 6. 객체와 자료 구조
 
 [객체와 자료 구조](./objects-and-data-structures.md)
+
+## 7. 오류 처리
+
+[오류 처리](./error-handling.md)
