@@ -29,3 +29,7 @@
 ## 7. 오류 처리
 
 [오류 처리](./error-handling.md)
+
+## 8. 경계
+
+[경계](./boundaries.md)
