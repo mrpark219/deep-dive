@@ -72,6 +72,10 @@
 
 [효율적인 테스트 작성 방법](./test-best-practices.md)
 
-## 8. 예제 코드
+## 8. Spring REST Docs
+
+[Spring REST Docs](./spring-rest-docs.md)
+
+## 9. 예제 코드
 
 [깃허브](https://github.com/mrpark219/testcode-study)
