@@ -49,3 +49,7 @@
 ## 12. 창발성
 
 [창발성](./emergence.md)
+
+## 13. 동시성
+
+[동시성](./concurrency.md)
