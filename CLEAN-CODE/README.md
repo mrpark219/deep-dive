@@ -53,3 +53,7 @@
 ## 13. 동시성
 
 [동시성](./concurrency.md)
+
+## 14. 점진적인 개선
+
+[점진적인 개선](./successive-refinement.md)
