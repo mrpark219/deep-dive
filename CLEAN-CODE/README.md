@@ -57,3 +57,7 @@
 ## 14. 점진적인 개선
 
 [점진적인 개선](./successive-refinement.md)
+
+## 15. 냄새와 휴라스틱
+
+[냄새와 휴라스틱](./smells-and-heuristics.md)
