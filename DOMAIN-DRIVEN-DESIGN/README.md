@@ -9,3 +9,7 @@
 ## 2. 아키텍처 개요
 
 [아키텍처 개요](./architecture-overview.md)
+
+## 3. 애그리거트
+
+[애그리거트](./aggregate.md)
