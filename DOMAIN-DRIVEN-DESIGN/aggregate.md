@@ -81,3 +81,87 @@
 - 이 문제를 해결하는 가장 좋은 방법은, ID 참조 방식을 유지하면서 **조회 전용 쿼리(예: JPQL Fetch Join)를 사용**하여 한 번의 쿼리로 필요한 데이터를 모두 가져오는 것이다.
 - 만약 애그리거트마다 서로 다른 저장소를 사용한다면, 한 번의 쿼리로 조회하는 것이 불가능하다. 이때는 **캐시(Cache)를 적용하거나 조회 전용 저장소를 별도로 구성**하여 성능을 높일 수 있다.
 - 이러한 방법은 구현 복잡도를 높이지만, 대규모 트래픽을 처리해야 하는 시스템에서는 **전체 처리량을 높이기 위해 필수적**일 수 있다.
+
+## 5. 애그리거트 간 집합 연관
+
+- 애그리거트 간의 **1-N(일대다)과 M-N(다대다) 연관**은 `Set`과 같은 컬렉션을 이용해 표현할 수 있다.
+- 하지만 개념적인 연관을 실제 구현에 그대로 반영하는 것은 여러 문제를 일으킬 수 있다.
+
+### 5.1. 1-N 연관과 성능
+
+- **1-N 관계**의 경우, 개념적인 연관을 컬렉션 필드로 직접 구현하면 **심각한 성능 저하**를 유발할 수 있다.
+- 예를 들어, 특정 카테고리에 속한 수만 개의 상품을 모두 조회한 뒤 메모리에서 페이징 처리를 하는 것은 매우 비효율적이다.
+- 이러한 **성능 문제 때문에**, 개념적으로 1-N 관계가 존재하더라도 실제 구현에서는 컬렉션으로 직접 참조하지 않는 경우가 많다.
+
+### 5.2. M-N 연관과 복잡성
+
+- **M-N 관계**는 개념적으로는 양방향 연관이지만, 이를 그대로 구현하면 모델이 매우 복잡해진다.
+- 따라서 실제 구현에서는 RDB의 조인 테이블처럼, **두 애그리거트를 연결해주는 별도의 엔티티를 두고 단방향 1-N 관계 두 개로 풀어내는 것**이 일반적이다.
+
+## 6. 애그리거트를 팩토리로 사용하기
+
+- 때로는 특정 애그리거트를 생성할 수 있는지 판단하는 로직이 **응용 서비스에 노출**되는 경우가 있다. 하지만 생성 가능 여부를 판단하고 객체를 생성하는 것은 **논리적으로 하나의 도메인 기능**에 해당한다.
+- 이러한 도메인 기능을 별도의 팩토리 클래스나 도메인 서비스로 만들 수도 있지만, **기존 애그리거트의 팩토리 메서드로 구현**하는 방법도 있다.
+- 특히, **기존 애그리거트가 가진 데이터를 이용해서 새로운 애그리거트를 생성**해야 하는 경우에 이 패턴을 고려해볼 수 있다.
+- 이처럼 애그리거트가 팩토리 역할을 함께 수행하면, 관련된 **도메인 로직을 한곳에 모아 응집도를 높이는** 효과가 있다.
+
+### 6.1. 예시: 상점(Store)이 상품(Product) 생성하기
+
+상점이 자신의 상태(예: 허용된 상품 카테고리)를 확인하고 상품을 생성하는 도메인 로직을 직접 수행하는 예시는 다음과 같다.
+
+#### 응용 서비스
+
+응용 서비스는 `Store` 애그리거트를 찾아 팩토리 역할(상품 생성)을 위임한다.
+
+```java
+public class ProductCreationService {
+    private StoreRepository storeRepository;
+    private ProductRepository productRepository;
+
+    public ProductId createNewProduct(Long storeId, String productName, Category category) {
+        // 1. 팩토리 역할을 할 Store 애그리거트를 조회한다.
+        Store store = storeRepository.findById(storeId);
+        if (store == null) {
+            throw new StoreNotFoundException();
+        }
+
+        // 2. Store 애그리거트에 Product 생성을 위임한다.
+        //    생성 규칙(e.g., 허용 카테고리)은 Store가 직접 검사한다.
+        Product newProduct = store.createProduct(productName, category);
+
+        // 3. 생성된 Product를 저장한다.
+        productRepository.save(newProduct);
+
+        return newProduct.getId();
+    }
+}
+```
+
+#### Store 애그리거트 (팩토리)
+
+`Store` 애그리거트는 상품 생성에 대한 도메인 규칙을 직접 확인하고, 통과하면 `Product` 객체를 생성하여 반환한다.
+
+```java
+public class Store {
+    @Id
+    private Long id;
+    private Set<Category> allowedCategories; // 이 상점에서 허용하는 카테고리 목록
+
+    /**
+     * 상품(Product)을 생성하는 팩토리 메서드
+     */
+    public Product createProduct(String productName, Category category) {
+        // 도메인 규칙: 이 상점에서 허용된 카테고리의 상품만 생성할 수 있다.
+        if (!isCategoryAllowed(category)) {
+            throw new CannotCreateProductException("허용되지 않는 카테고리입니다.");
+        }
+
+        // 규칙을 통과하면 Product 애그리거트를 생성하여 반환한다.
+        return new Product(this.id, productName, category);
+    }
+
+    private boolean isCategoryAllowed(Category category) {
+        return allowedCategories.contains(category);
+    }
+}
+```
