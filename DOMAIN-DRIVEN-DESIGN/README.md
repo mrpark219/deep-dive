@@ -13,3 +13,7 @@
 ## 3. 애그리거트
 
 [애그리거트](./aggregate.md)
+
+## 4. 리포지터리와 모델 구현
+
+[리포지터리와 모델 구현](./repository-and-model-implementation.md)
