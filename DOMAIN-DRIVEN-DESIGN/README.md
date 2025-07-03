@@ -17,3 +17,7 @@
 ## 4. 리포지터리와 모델 구현
 
 [리포지터리와 모델 구현](./repository-and-model-implementation.md)
+
+## 5. 스프링 데이터 JPA를 이용한 조회 기능
+
+[스프링 데이터 JPA를 이용한 조회 기능](./spring-data-jpa-query-features.md)
