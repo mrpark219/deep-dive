@@ -21,3 +21,7 @@
 ## 5. 스프링 데이터 JPA를 이용한 조회 기능
 
 [스프링 데이터 JPA를 이용한 조회 기능](./spring-data-jpa-query-features.md)
+
+## 6. 응용 서비스와 표현 영역
+
+[응용 서비스와 표현 영역](./application-service-and-presentation.md)
