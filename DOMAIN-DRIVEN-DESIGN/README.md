@@ -25,3 +25,7 @@
 ## 6. 응용 서비스와 표현 영역
 
 [응용 서비스와 표현 영역](./application-service-and-presentation.md)
+
+## 7. 도메인 서비스
+
+[도메인 서비스](./domain-service.md)
