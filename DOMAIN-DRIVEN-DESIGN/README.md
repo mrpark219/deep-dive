@@ -29,3 +29,7 @@
 ## 7. 도메인 서비스
 
 [도메인 서비스](./domain-service.md)
+
+## 8. 애그리거트 트랜잭션 관리
+
+[애그리거트 트랜잭션 관리](./aggregate-transaction-management.md)
