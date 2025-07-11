@@ -92,3 +92,67 @@ entityManager.find(Order.class, id, LockModeType.OPTIMISTIC_FORCE_INCREMENT);
 
 - 이 잠금 모드를 사용하면, 애그리거트 내의 자식 엔티티나 밸류만 변경되더라도 **루트 엔티티의 버전을 안전하게 증가**시켜 비선점 잠금 기능을 올바르게 적용할 수 있다.
 - 스프링 데이터 JPA에서는 **`@Lock` 애너테이션**을 통해 이 잠금 모드를 지정할 수 있다.
+
+## 4. 오프라인 선점 잠금
+
+- 더 엄격하게 데이터 충돌을 막고 싶을 때, 즉 **한 사용자가 수정 화면을 보고 있는 동안 다른 사용자가 아예 수정 화면에 진입하지 못하도록** 막고 싶을 때가 있다.
+- 이는 단일 트랜잭션 내에서만 유효한 선점 잠금이나, 커밋 시점에 충돌을 확인하는 비선점 잠금으로는 해결할 수 없다. 이때 필요한 것이 바로 **오프라인 선점 잠금(Offline Pessimistic Lock)** 방식이다.
+- 오프라인 선점 잠금은 **여러 트랜잭션에 걸쳐 잠금을 유지**하는 방식이다. 예를 들어, 사용자가 수정 화면에 진입하는 첫 트랜잭션에서 잠금을 선점하고, 수정을 완료하는 마지막 트랜잭션에서 잠금을 해제한다.
+- 만약 사용자가 잠금을 해제하지 않고 창을 닫아버리면 다른 사용자는 영원히 해당 기능을 사용할 수 없게 된다. 이런 문제를 방지하기 위해, 오프라인 잠금은 반드시 **일정 시간 후에 자동으로 잠금이 해제되는 유효 시간(timeout)** 을 가져야 한다.
+- 반대로, 사용자가 정상적으로 수정 작업을 하고 있음에도 유효 시간이 만료되어 잠금이 풀리는 경우도 있다. 이를 방지하기 위해, **주기적으로 잠금 유효 시간을 갱신(renew)** 해주는 기능 또한 필요하다.
+
+### 4.1. 오프라인 선점 잠금을 위한 LockManager 인터페이스
+
+- 오프라인 선점 잠금을 구현하려면, **잠금 선점, 잠금 확인, 잠금 해제, 유효시간 연장**의 네 가지 기능이 필요하다.
+- 이를 위해 아래와 같이 `LockManager` 인터페이스를 정의할 수 있다.
+
+```java
+public interface LockManager {
+    /**
+     * 잠금을 시도한다.
+     * @param type 잠글 대상 타입
+     * @param id 잠글 대상 ID
+     * @return 생성된 잠금의 고유 ID
+     * @throws LockException 이미 잠겨있을 경우 발생
+     */
+    LockId tryLock(String type, String id) throws LockException;
+
+    /**
+     * 잠금 상태를 확인한다.
+     * @param lockId 확인할 잠금의 고유 ID
+     * @throws LockException 잠금이 존재하지 않거나 만료되었을 경우 발생
+     */
+    void checkLock(LockId lockId) throws LockException;
+
+    /**
+     * 잠금을 해제한다.
+     * @param lockId 해제할 잠금의 고유 ID
+     * @throws LockException 잠금이 존재하지 않을 경우 발생
+     */
+    void releaseLock(LockId lockId) throws LockException;
+
+    /**
+     * 잠금의 유효 시간을 연장한다.
+     * @param lockId 연장할 잠금의 고유 ID
+     * @param inc 증가시킬 시간 (밀리초)
+     * @throws LockException 잠금이 존재하지 않을 경우 발생
+     */
+    void extendLockExpiration(LockId lockId, long inc) throws LockException;
+}
+```
+
+### 4.2. DB를 이용한 LockManager 구현
+
+- 데이터베이스를 이용하여 `LockManager`를 구현하려면, **잠금 정보를 저장할 테이블과 인덱스**를 아래와 같이 생성해야 한다.
+
+```sql
+CREATE TABLE locks (
+    `type` VARCHAR(255),
+    `id` VARCHAR(255),
+    `lockid` VARCHAR(255),
+    `expiration_time` DATETIME,
+    PRIMARY KEY (`type`, `id`)
+) character set utf8mb4;
+
+CREATE UNIQUE INDEX locks_idx ON locks (lockid);
+```
