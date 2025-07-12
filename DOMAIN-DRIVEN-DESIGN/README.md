@@ -33,3 +33,7 @@
 ## 8. 애그리거트 트랜잭션 관리
 
 [애그리거트 트랜잭션 관리](./aggregate-transaction-management.md)
+
+## 9. 도메인 모델과 바운디드 컨텍스트
+
+[도메인 모델과 바운디드 컨텍스트](./domain-model-and-bounded-context.md)
