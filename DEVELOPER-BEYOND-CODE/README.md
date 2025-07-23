@@ -5,3 +5,7 @@
 ## 1. 상위 1% 개발자가 되기 위한 실전 소프트 스킬
 
 [상위 1% 개발자가 되기 위한 실전 소프트 스킬](./top-1-percent-dev-soft-skills.md)
+
+## 2. 조직을 성장의 무대로 만드는 커리어 전략
+
+[조직을 성장의 무대로 만드는 커리어 전략](./career-strategy-growth-organization.md)
