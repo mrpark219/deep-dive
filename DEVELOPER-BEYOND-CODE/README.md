@@ -9,3 +9,7 @@
 ## 2. 조직을 성장의 무대로 만드는 커리어 전략
 
 [조직을 성장의 무대로 만드는 커리어 전략](./career-strategy-growth-organization.md)
+
+## 3. 커리어 도약을 위한 퍼스널 브랜딩 기술
+
+[커리어 도약을 위한 퍼스널 브랜딩 기술](./personal-branding-for-career-growth.md)
