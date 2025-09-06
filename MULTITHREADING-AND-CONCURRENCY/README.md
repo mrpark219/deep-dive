@@ -7,3 +7,7 @@
 ## 2. 자바 메모리 구조와 스레드
 
 [자바 메모리 구조와 스레드](./java-memory-structure-and-thread.md)
+
+## 3. 스레드 제어와 생명 주기
+
+[스레드 제어와 생명 주기](./thread-control-and-lifecycle.md)
