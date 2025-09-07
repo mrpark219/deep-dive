@@ -45,3 +45,48 @@ Thread myThread = new Thread(new HelloRunnable(), "myThread");
   - `WAITING`: 다른 스레드가 특정 작업을 수행하고 통지(notify)해주기를 무한정 기다리는 상태이다.
   - `TIMED_WAITING`: 지정된 시간 동안만 기다리는 상태이다.
   - `TERMINATED`: `run()` 메서드의 실행이 완전히 종료된 상태이다.
+
+## 3. 스레드의 생명 주기
+
+- 자바 스레드는 여러 상태를 가지며, 이 상태들의 변화 과정을 **스레드 생명 주기(Thread Lifecycle)** 라고 한다.
+- 주요 상태는 `New`, `Runnable`, `Terminated`이며, `Runnable` 상태에서 다른 작업을 기다리는 여러 **'일시 중지' 상태**(`Blocked`, `Waiting`, `Timed Waiting`)로 전환될 수 있다.
+
+### 3.1. New (생성)
+
+- **`Thread` 객체가 생성되었지만, 아직 `start()` 메서드가 호출되지 않은 상태**이다.
+
+### 3.2. Runnable (실행 대기)
+
+- `start()` 메서드가 호출되면 스레드는 이 상태로 들어간다.
+- 이 상태는 스레드가 **실행 중이거나 또는 실행될 준비가 되어** 언제든 CPU를 할당받을 수 있음을 의미한다.
+- 자바에서는 OS 스케줄러의 실행 대기열에 있는 상태와, 실제 CPU에서 실행 중인 상태를 **구분하지 않고 모두 `Runnable` 상태**로 본다.
+
+### 3.3. Blocked (일시 중지: 동기화 블록)
+
+- **`synchronized` 블록에 진입하기 위해 다른 스레드가 점유한 락(lock)을 기다리는 상태**이다.
+
+### 3.4. Waiting (일시 중지: 무한 대기)
+
+- **다른 스레드가 특정 작업을 완료하고 `notify()` 또는 `notifyAll()`을 호출해줄 때까지 무한정 기다리는 상태**이다.
+- `Object.wait()`, `Thread.join()` 메서드 등이 호출될 때 이 상태가 된다.
+
+### 3.5. Timed Waiting (일시 중지: 시간 제한 대기)
+
+- **지정된 시간 동안만 다른 스레드의 작업이 완료되기를 기다리는 상태**이다.
+- 시간이 경과하거나 다른 스레드가 해당 스레드를 깨우면 이 상태에서 벗어난다. `Thread.sleep(long)`, `Object.wait(long)` 등이 호출될 때 이 상태가 된다.
+
+### 3.6. Terminated (종료)
+
+- `run()` 메서드의 실행이 정상적으로, 혹은 예외로 인해 **완전히 종료된 상태**이다.
+- 한번 `Terminated` 상태가 된 스레드는 다시 시작할 수 없다.
+
+### 3.7. 자바 스레드의 상태 전이 과정
+
+- **`New` → `Runnable`**
+  - `start()` 메서드를 호출하면 전이된다.
+- **`Runnable` → `Blocked`/`Waiting`/`Timed Waiting`**
+  - 동기화 락을 기다리거나, `wait()`, `sleep()`, `join()` 등의 메서드를 호출하면 전이된다.
+- **`Blocked`/`Waiting`/`Timed Waiting` → `Runnable`**
+  - 락을 얻거나, 기다림이 끝나면(시간 초과, `notify` 등) 다시 `Runnable` 상태로 돌아가 실행 순서를 기다린다.
+- **`Runnable` → `Terminated`**
+  - `run()` 메서드가 완료되면 `Terminated` 상태가 된다.
