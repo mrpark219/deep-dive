@@ -11,3 +11,7 @@
 ## 3. 스레드 제어와 생명 주기
 
 [스레드 제어와 생명 주기](./thread-control-and-lifecycle.md)
+
+## 4. 메모리 가시성
+
+[메모리 가시성](./memory-visibility.md)
