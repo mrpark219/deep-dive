@@ -15,3 +15,7 @@
 ## 4. 메모리 가시성
 
 [메모리 가시성](./memory-visibility.md)
+
+## 5. 동기화
+
+[동기화](./synchronized.md)
