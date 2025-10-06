@@ -27,3 +27,7 @@
 ## 7. 생산자 소비자 문제1
 
 [생산자 소비자 문제1](./producer-consumer1.md)
+
+## 8. 생산자 소비자 문제2
+
+[[생산자 소비자 문제2](./producer-consumer2.md)]
