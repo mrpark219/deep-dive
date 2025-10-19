@@ -61,7 +61,7 @@
 - 이 방식은 기존 컬렉션을 스레드 세이프하게 만드는 가장 간단한 방법이다.
 - 하지만, 단순 무식하게 모든 메서드에 synchronized를 걸었기 때문에 **동기화에 대한 최적화가 전혀 이루어지지 않았다**. 자바는 이러한 단점을 보완하기 위해 `java.util.concurrent` 패키지에 다양한 **동시성 컬렉션(Concurrent Collections)**을 별도로 제공한다.
 
-### 2.2. synchronized 프록시의 단점
+#### synchronized 프록시의 단점
 
 - **동기화 오버헤드 발생**
   - 각 메서드를 호출할 때마다 **동기화 비용이 발생**하여 성능 저하의 원인이 된다.
@@ -69,3 +69,42 @@
   - 컬렉션 전체를 하나의 락(lock)으로 제어하므로, 한 스레드가 컬렉션을 사용하는 동안 다른 모든 스레드는 **작업의 종류와 상관없이 무조건 대기**해야 한다. 이는 **잠금 경합(lock contention)을 증가**시켜 병렬 처리 효율을 저하시킨다.
 - **정교한 동기화 불가**
   - 특정 부분이나 메서드에 대해서만 **선택적으로 동기화를 적용하는 것이 불가능**하여, 이는 과도한 동기화로 이어질 수 있다.
+
+### 2.2. 동시성 컬렉션
+
+- 자바 1.5부터 동시성에 대한 많은 혁신이 이루어졌으며, 이때 등장한 **동시성 컬렉션(Concurrent Collections)** 은 **스레드 세이프한 컬렉션을 의미**한다.
+- `java.util.concurrent` 패키지는 멀티스레드 환경을 지원하는 `ConcurrentHashMap`, `CopyOnWriteArrayList` 등 다양한 동시성 컬렉션을 제공한다.
+- 이 컬렉션들은 더 정교한 잠금 메커니즘을 사용하여 동시 접근을 효율적으로 처리하며, **필요한 부분에만 동기화를 적용**하는 등 유연한 전략을 제공한다.
+- 성능 최적화를 위해 `synchronized`, `Lock`, `CAS`, 분할 잠금(Segment Lock) 등 다양한 기술을 조합하여 매우 정교하게 구현되어 있다.
+
+### 2.3. 동시성 컬렉션의 종류
+
+#### List
+
+- `CopyOnWriteArrayList`: `ArrayList`의 동시성 버전이다.
+
+#### Set
+
+- `CopyOnWriteArraySet`: `HashSet`의 동시성 버전이다.
+- `ConcurrentSkipListSet`: `TreeSet`의 동시성 버전으로, 정렬된 순서를 유지한다.
+
+#### Map
+
+- `ConcurrentHashMap`: `HashMap`의 동시성 버전이다.
+- `ConcurrentSkipListMap`: `TreeMap`의 동시성 버전으로, 정렬된 순서를 유지한다.
+
+#### Deque
+
+- `ConcurrentLinkedDeque`: 동시성을 지원하는 **비차단(non-blocking)** 데크(Deque)이다.
+
+#### 참고
+
+- 입력 순서를 유지하면서 스레드 세이프한 `LinkedHashSet`이나 `LinkedHashMap`의 동시성 버전은 기본으로 제공되지 않는다. 이 경우 `Collections.synchronizedSet/Map()`을 사용해야 한다.
+
+#### 블로킹 큐 (Blocking Queue)
+
+- `ArrayBlockingQueue`: **크기가 고정된** 블로킹 큐이며, **공정(fair) 모드**를 지원한다. (공정 모드는 성능 저하가 발생할 수 있다.)
+- `LinkedBlockingQueue`: **크기가 고정되거나 무한할 수 있는** 블로킹 큐이다.
+- `PriorityBlockingQueue`: **우선순위가 높은 요소**를 먼저 처리하는 블로킹 큐이다.
+- `SynchronousQueue`: **데이터를 저장하지 않는** 특별한 큐이다. 생산자의 `put()`은 소비자의 `take()`가 호출될 때까지 대기하며, **생산자와 소비자 간의 직접적인 데이터 전달(hand-off)** 을 구현한다.
+- `DelayQueue`: **지연된(delayed) 요소를 처리**하는 큐이다. 각 요소는 지정된 지연 시간이 지나야만 큐에서 꺼낼 수 있으며, 스케줄링 작업에 유용하다.
