@@ -34,3 +34,44 @@
 - 스레드 풀을 사용하면 **스레드 생성 비용을 절약**할 수 있고, **최대 스레드 개수를 관리**하여 시스템을 안정적으로 유지할 수 있다.
 - 이러한 스레드 풀의 복잡한 동작(생산자-소비자 패턴, 스레드 상태 관리 등)을 직접 구현하는 것은 매우 어렵다.
 - 자바는 이 모든 문제를 한 번에 해결해주는 **Executor 프레임워크**를 제공한다.
+
+## 2. Executor 프레임워크
+
+- **Executor 프레임워크**는 멀티스레딩 및 병렬 처리를 쉽게 사용할 수 있도록 돕는 **기능 모음**이다.
+- 작업의 실행과 스레드 풀을 효율적으로 관리하여, 개발자가 **직접 스레드를 생성하고 관리하는 복잡함을 줄여준다**.
+
+### 2.1. 주요 구성 요소
+
+- Executor 프레임워크는 여러 인터페이스와 클래스로 구성되며, 그 중심에는 `Executor`와 `ExecutorService` 인터페이스가 있다.
+
+#### Executor 인터페이스
+
+```java
+package java.util.concurrent;
+
+public interface Executor {
+    void execute(Runnable command);
+}
+```
+
+- `Executor`는 가장 단순한 작업 실행 인터페이스로, **`execute(Runnable command)`** 메서드 하나만을 가진다.
+
+#### ExecutorService 인터페이스
+
+```java
+package java.util.concurrent;
+
+public interface ExecutorService extends Executor, AutoCloseable {
+    <T> Future<T> submit(Callable<T> task);
+
+    @Override
+    default void close() {
+        //...
+    };
+    // ...
+}
+```
+
+- `ExecutorService`는 `Executor` 인터페이스를 확장하여, **작업의 제출 및 제어 기능을 추가로 제공**하는 핵심 인터페이스이다.
+- 주요 메서드로는 `submit()`과 `close()` 가 있다.
+- Executor 프레임워크를 사용할 때는 **대부분 이 인터페이스를 사용**하며, 주요 구현체로는 `ThreadPoolExecutor`가 있다.
