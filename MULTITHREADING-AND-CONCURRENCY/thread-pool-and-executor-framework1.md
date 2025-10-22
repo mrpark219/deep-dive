@@ -75,3 +75,24 @@ public interface ExecutorService extends Executor, AutoCloseable {
 - `ExecutorService`는 `Executor` 인터페이스를 확장하여, **작업의 제출 및 제어 기능을 추가로 제공**하는 핵심 인터페이스이다.
 - 주요 메서드로는 `submit()`과 `close()` 가 있다.
 - Executor 프레임워크를 사용할 때는 **대부분 이 인터페이스를 사용**하며, 주요 구현체로는 `ThreadPoolExecutor`가 있다.
+
+## 3. TheadPoolExecutor
+
+- `ExecutorService`의 핵심 구현체로, 크게 **스레드 풀(Thread Pool)** 과 **작업 큐(Task Queue)**, 두 가지 요소로 구성된다.
+- **스레드 풀**은 스레드를 생성하고 관리하며, **작업 큐**는 제출된 작업들을 보관하는 역할을 한다. 이때 작업 큐는 생산자-소비자 문제를 해결하기 위해 일반 큐가 아닌 `BlockingQueue`를 사용한다.
+- `executor.execute(new Task())`와 같이 작업을 제출하면, 해당 작업(`Task`)은 `BlockingQueue`에 보관된다. 이 과정에서 작업을 제출하는 스레드(예: `main` 스레드)가 **생산자**가 되고, 스레드 풀에 있는 스레드들이 **소비자**가 되어 큐에 보관된 작업을 가져가 처리하는 **생산자-소비자 패턴**으로 동작한다.
+
+### 3.1 ThreadPollExecutor 생성자
+
+```java
+public ThreadPoolExecutor(int corePoolSize,
+                          int maximumPoolSize,
+                          long keepAliveTime,
+                          TimeUnit unit,
+                          BlockingQueue<Runnable> workQueue) { ... }
+```
+
+- `corePoolSize`: **핵심 스레드 수**. 스레드 풀에서 스레드의 수이다.
+- `maximumPoolSize`: **최대 스레드 수**. 스레드 풀에서 관리하는 최대 스레드의 수이다.
+- `keepAliveTime`, `unit`: **최대 스레드의 유휴 시간**. `maximumPoolSize`에 의해 생성된 스레드가 이 시간 동안 아무 작업도 하지 않으면 제거된다.
+- `workQueue`: **작업 큐**. 제출된 `Runnable` 작업을 보관하는 `BlockingQueue`이다.
