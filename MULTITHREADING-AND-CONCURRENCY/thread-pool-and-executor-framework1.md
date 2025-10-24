@@ -82,7 +82,7 @@ public interface ExecutorService extends Executor, AutoCloseable {
 - **스레드 풀**은 스레드를 생성하고 관리하며, **작업 큐**는 제출된 작업들을 보관하는 역할을 한다. 이때 작업 큐는 생산자-소비자 문제를 해결하기 위해 일반 큐가 아닌 `BlockingQueue`를 사용한다.
 - `executor.execute(new Task())`와 같이 작업을 제출하면, 해당 작업(`Task`)은 `BlockingQueue`에 보관된다. 이 과정에서 작업을 제출하는 스레드(예: `main` 스레드)가 **생산자**가 되고, 스레드 풀에 있는 스레드들이 **소비자**가 되어 큐에 보관된 작업을 가져가 처리하는 **생산자-소비자 패턴**으로 동작한다.
 
-### 3.1 ThreadPollExecutor 생성자
+### 3.1. ThreadPollExecutor 생성자
 
 ```java
 public ThreadPoolExecutor(int corePoolSize,
@@ -96,3 +96,51 @@ public ThreadPoolExecutor(int corePoolSize,
 - `maximumPoolSize`: **최대 스레드 수**. 스레드 풀에서 관리하는 최대 스레드의 수이다.
 - `keepAliveTime`, `unit`: **최대 스레드의 유휴 시간**. `maximumPoolSize`에 의해 생성된 스레드가 이 시간 동안 아무 작업도 하지 않으면 제거된다.
 - `workQueue`: **작업 큐**. 제출된 `Runnable` 작업을 보관하는 `BlockingQueue`이다.
+
+## 4. Future
+
+### 4.1. Runnable과 Callable 비교
+
+#### Runnable
+
+```java
+package java.lang;
+
+public interface Runnable {
+    void run();
+}
+```
+
+- `run()` 메서드의 반환 타입이 `void`이므로, **작업의 결과를 반환할 수 없다**.
+- 메서드 시그니처에 예외가 선언되어 있지 않으므로, **체크 예외(Checked Exception)를 밖으로 던질 수 없다**.
+
+#### Callable
+
+```java
+package java.util.concurrent;
+
+public interface Callable<V> {
+    V call() throws Exception;
+}
+```
+
+- `call()` 메서드의 반환 타입이 제네릭 `V`이므로, **작업의 결과를 반환할 수 있다**.
+- `throws Exception`이 선언되어 있어, **체크 예외를 밖으로 던질 수 있다**.
+
+#### Callable과 Future 사용
+
+- `ExecutorService`의 `submit(Callable<T> task)` 메서드를 통해 `Callable` 작업을 전달할 수 있다.
+- 작업을 제출하면 `ExecutorService`는 즉시 **`Future`** 라는 특별한 객체를 반환한다.
+- 이후, `future.get()` 메서드를 호출하면, **`Callable`의 `call()` 메서드가 반환한 실제 결과를 받아올 수 있다**.
+
+```java
+// Callable 작업을 제출하고 즉시 Future를 받는다.
+Future<Integer> future = executorService.submit(new MyCallable());
+
+// ... 다른 작업을 수행 ...
+
+// future.get()을 호출하여 결과를 받는다.
+Integer result = future.get();
+```
+
+- 이처럼 `Callable`과 `Future`를 사용하면, `Runnable`의 한계였던 **반환 값과 예외 처리를 매우 편리하게 해결**할 수 있다.
