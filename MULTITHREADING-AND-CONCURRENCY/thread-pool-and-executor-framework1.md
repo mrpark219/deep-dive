@@ -154,3 +154,36 @@ Integer result = future.get();
   - **작업이 아직 실행 중인 경우**: `get()`을 호출한 스레드는 **작업이 완료될 때까지 블로킹 상태**가 되어 기다린다.
 - `Future` 인터페이스의 주요 구현체는 `FutureTask`이다. 이 객체는 **내부적으로 작업의 완료 여부와 결과 값을 관리**한다.
 - `submit()`을 호출하면 `Callable` 작업을 감싸는 `FutureTask` 객체가 생성되며, 바로 이 **`FutureTask`가 스레드 풀의 블로킹 큐에 저장**된다.
+
+### 4.3. Future가 필요한 이유
+
+- `submit()`이 `Future`를 반환하는 대신, 작업이 끝날 때까지 기다렸다가 결과를 직접 반환하면 어떻게 될까? 이는 **비동기 처리의 이점을 전혀 살리지 못하는 방식**이다.
+
+#### Future가 없는 경우 (동기 블로킹)
+
+- 작업을 요청한 스레드는 **결과를 받을 때까지 블로킹(blocking)** 되어 아무 일도 하지 못한다.
+- `task1`이 끝나야만 비로소 `task2`를 요청할 수 있으므로, **두 작업은 순차적으로 실행**될 뿐 병렬로 처리되지 않는다.
+
+#### Future를 사용하는 경우 (비동기 논블로킹)
+
+- 요청 스레드는 `task1`을 제출하고 **즉시 `Future`를 반환**받는다. 그리고 기다리지 않고 바로 `task2`를 제출하고 또 다른 `Future`를 반환받는다.
+- 이를 통해 **`task1`과 `task2`가 동시에 병렬로 실행**될 수 있다.
+- 모든 작업을 요청한 뒤에, `future1.get()`, `future2.get()`을 순서대로 호출하여 **필요한 시점에 결과를 기다린다**.
+
+#### Future를 잘못 사용하는 예시
+
+```java
+// 예시 1: submit() 직후 get() 호출
+Future<Integer> future1 = es.submit(task1);
+Integer sum1 = future1.get(); // 여기서 task1이 끝날 때까지 블로킹
+
+Future<Integer> future2 = es.submit(task2); // task1이 끝나야 실행됨
+Integer sum2 = future2.get();
+
+// 예시 2: 메서드 체이닝으로 get() 호출
+Integer sum1 = es.submit(task1).get(); // 여기서 task1이 끝날 때까지 블로킹
+Integer sum2 = es.submit(task2).get(); // task1이 끝나야 실행됨
+```
+
+- `submit()`을 호출하자마자 **곧바로 `get()`을 호출하는 것은 비동기 처리의 이점을 없애고, 싱글 스레드처럼 순차적으로 동작**하게 만드는 대표적인 잘못된 사용법이다.
+- 결론적으로 `Future`는, **작업의 요청(`submit`)과 결과 수신(`get`) 시점을 분리**하여, 요청 스레드가 **기다리지 않고 다른 작업을 계속 수행**할 수 있게 해주는 핵심적인 역할을 한다.
