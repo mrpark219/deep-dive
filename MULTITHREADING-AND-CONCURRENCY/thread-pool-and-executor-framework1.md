@@ -187,3 +187,77 @@ Integer sum2 = es.submit(task2).get(); // task1이 끝나야 실행됨
 
 - `submit()`을 호출하자마자 **곧바로 `get()`을 호출하는 것은 비동기 처리의 이점을 없애고, 싱글 스레드처럼 순차적으로 동작**하게 만드는 대표적인 잘못된 사용법이다.
 - 결론적으로 `Future`는, **작업의 요청(`submit`)과 결과 수신(`get`) 시점을 분리**하여, 요청 스레드가 **기다리지 않고 다른 작업을 계속 수행**할 수 있게 해주는 핵심적인 역할을 한다.
+
+### 4.4 Future 인터페이스
+
+```java
+package java.util.concurrent;
+
+public interface Future<V> {
+    boolean cancel(boolean mayInterruptIfRunning);
+
+    boolean isCancelled();
+
+    boolean isDone();
+
+    V get() throws InterruptedException, ExecutionException;
+
+    V get(long timeout, TimeUnit unit)
+        throws InterruptedException, ExecutionException, TimeoutException;
+
+  // 자바 19부터 추가된 상태 enum
+    enum State {
+        RUNNING,
+        SUCCESS,
+        FAILED,
+        CANCELLED
+    }
+
+    // 자바 19부터 추가된 상태 조회 메서드
+    State state();
+}
+```
+
+#### boolean cancel(boolean mayInterruptIfRunning)
+
+- 기능: 아직 완료되지 않은 작업을 **취소**한다.
+- 매개변수 (`mayInterruptIfRunning`):
+  - `true`: 작업을 **취소 상태**로 만들고, 만약 작업이 이미 실행 중이라면 **`Thread.interrupt()`를 호출**하여 중단을 시도한다.
+  - `false`: 작업을 **취소 상태**로 만들지만, 이미 실행 중인 작업은 **중단시키지 않는다**.
+- 반환값: 작업이 성공적으로 취소되면 `true`, 이미 완료되었거나 취소할 수 없는 상태이면 `false`를 반환한다.
+- 참고: 취소 상태의 `Future`에 `get()`을 호출하면 `CancellationException` 런타임 예외가 발생한다.
+
+#### boolean isCancelled()
+
+- 기능: 작업이 **취소되었는지 여부**를 확인한다.
+- 반환값: `cancel()` 메서드에 의해 작업이 취소되었다면 `true`, 그렇지 않으면 `false`를 반환한다.
+
+#### boolean isDone()
+
+- 기능: 작업이 **완료되었는지 여부**를 확인한다.
+- 반환값: 작업이 정상적으로 완료되었거나, 취소되었거나, 예외로 인해 종료된 경우 `true`를 반환한다. 그렇지 않은 경우 `false`를 반환한다.
+
+#### State state() (Java 19+)
+
+- 기능: `Future`의 현재 상태를 `Future.State` 열거형으로 반환한다. (자바 19부터 지원)
+  - `RUNNING`: 작업 실행 중이다.
+  - `SUCCESS`: 작업이 성공적으로 완료되었다.
+  - `FAILED`: 작업 중 예외가 발생하여 실패로 완료되었다.
+  - `CANCELLED`: 작업이 취소되었다.
+
+#### V get()
+
+- 기능: 작업이 완료될 때까지 **현재 스레드를 블로킹(blocking)** 하며 기다렸다가, 완료되면 **결과를 반환**한다.
+- 반환값: 작업의 결과(`V` 타입)이다.
+- 예외:
+  - `InterruptedException`: 대기 중에 현재 스레드가 인터럽트된 경우 발생한다.
+  - `ExecutionException`: 작업 실행 중 예외가 발생한 경우 발생한다.
+
+#### V get(long timeout, TimeUnit unit)
+
+- 기능: `get()`과 동일하지만, **지정된 시간까지만 대기**한다.
+- 매개변수:
+  - `timeout`: 대기할 최대 시간이다.
+  - `unit`: `timeout`의 시간 단위이다. (`TimeUnit.SECONDS` 등)
+- 예외: `get()`과 동일한 예외에 추가적으로
+  - `TimeoutException`: 주어진 시간 내에 작업이 완료되지 않은 경우 발생한다.
