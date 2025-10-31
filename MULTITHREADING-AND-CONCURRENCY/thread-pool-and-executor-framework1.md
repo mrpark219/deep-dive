@@ -261,3 +261,40 @@ public interface Future<V> {
   - `unit`: `timeout`의 시간 단위이다. (`TimeUnit.SECONDS` 등)
 - 예외: `get()`과 동일한 예외에 추가적으로
   - `TimeoutException`: 주어진 시간 내에 작업이 완료되지 않은 경우 발생한다.
+
+## 5. ExecutorService 작업 컬렉션 처리
+
+- `ExecutorService`는 **여러 개의 `Callable` 작업을 한 번에 처리**하는 `invokeAll()`과 `invokeAny()` 메서드를 제공한다.
+
+### 5.1. invokeAll()
+
+- `invokeAll()` 메서드는 전달된 `Callable` 작업 **컬렉션 전부를 실행**하고, **모든 작업이 완료될 때까지 기다렸다가** 그 결과(`Future` 목록)를 반환한다.
+- 시간 제한(`timeout`)을 설정할 수도 있다.
+
+```java
+// 모든 작업이 완료될 때까지 기다린다.
+<T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks)
+    throws InterruptedException;
+
+// 지정된 시간까지만 기다린다.
+<T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks,
+                                long timeout, TimeUnit unit)
+    throws InterruptedException;
+```
+
+### 5.2. invokeAny()
+
+- `invokeAny()` 메서드는 전달된 `Callable` 작업 컬렉션 중에서 **가장 먼저 완료된 작업의 결과 하나만 반환**한다.
+- 하나의 작업이 성공적으로 완료되면, **아직 완료되지 않은 나머지 작업들은 모두 취소**된다.
+- 시간 제한(`timeout`)을 설정할 수도 있다.
+
+```java
+// 하나의 작업이라도 완료될 때까지 기다린다.
+<T> T invokeAny(Collection<? extends Callable<T>> tasks)
+    throws InterruptedException, ExecutionException;
+
+// 지정된 시간 안에 하나의 작업이라도 완료될 때까지 기다린다.
+<T> T invokeAny(Collection<? extends Callable<T>> tasks,
+                long timeout, TimeUnit unit)
+    throws InterruptedException, ExecutionException, TimeoutException;
+```
