@@ -140,3 +140,92 @@ new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new Synchron
 ```java
 new ThreadPoolExecutor(100, 200, 60L, TimeUnit.SECONDS, new ArrayBlockingQueue<>(1000));
 ```
+
+## 5. Executor 예외 정책
+
+- 생산자-소비자 문제를 실무에서 사용할 때, **소비자가 처리할 수 없을 정도로 생산 요청이 가득 차면 어떻게 할지**를 정해야 한다.
+- 개발자가 인지할 수 있도록 로그도 남겨야 하고, 사용자에게 시스템 문제 상황을 알리는 것도 필요하다. 이를 위해 **예외 정책**이 필요하다.
+- `ThreadPoolExecutor`에 작업을 요청할 때 **큐가 가득 차고, 초과 스레드도 더 이상 할당할 수 없다면** 작업을 거절한다. `shutdown()` 호출 이후에 요청을 거절할 때도 동일한 정책이 적용된다.
+- `ThreadPoolExecutor`는 작업을 거절하는 다양한 정책을 제공한다.
+  - AbortPolicy: `RejectedExecutionException` 예외를 발생시킨다. (기본 정책)
+  - DiscardPolicy: 새로운 작업을 조용히 버린다.
+  - CallerRunsPolicy: 작업을 제출한 스레드(생산자 스레드)가 대신 작업을 직접 실행한다.
+  - 사용자 정의(RejectedExecutionHandler 구현): 개발자가 직접 거절 정책을 정의한다.
+
+### 5.1. AbortPolicy
+
+- `AbortPolicy`는 **기본 정책**이므로, 마지막 인자는 생략해도 동일하게 동작한다.
+
+```java
+new ThreadPoolExecutor(1, 1, 0, TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadPoolExecutor.AbortPolicy());
+```
+
+#### RejectedExecutionHandler
+
+- `ThreadPoolExecutor` 생성자는 `RejectedExecutionHandler` 인터페이스의 구현체를 전달받는다. `AbortPolicy`가 그 구현체 중 하나이다.
+- `ThreadPoolExecutor`는 작업 거절 상황이 발생하면, 전달받은 `RejectedExecutionHandler`의 `rejectedExecution()` 메서드를 호출한다.
+
+```java
+public interface RejectedExecutionHandler {
+    void rejectedExecution(Runnable r, ThreadPoolExecutor executor);
+}
+```
+
+```java
+public static class AbortPolicy implements RejectedExecutionHandler {
+    public AbortPolicy() { }
+
+    public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
+        throw new RejectedExecutionException("Task " + r.toString() +
+                                              " rejected from " +
+                                              e.toString());
+    }
+}
+```
+
+### 5.2. DiscardPolicy
+
+- 거절된 작업을 **아무런 예외 없이 조용히 무시**하고 버리는 정책이다.
+
+```java
+new ThreadPoolExecutor(1, 1, 0, TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadPoolExecutor.DiscardPolicy());
+```
+
+```java
+public static class DiscardPolicy implements RejectedExecutionHandler {
+    public DiscardPolicy() { }
+
+    public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
+        // 아무것도 하지 않고 작업을 버린다.
+    }
+}
+```
+
+### 5.3. CallerRunsPolicy
+
+- 이 정책은 **작업을 요청한 스레드(생산자 스레드)가 해당 작업을 직접 실행**하도록 만든다.
+- 이 방식의 중요한 특징은, 생산자 스레드가 직접 일을 처리하는 동안 **새로운 작업 생산 속도가 자연스럽게 느려진다**는 점이다. 이를 통해 **생산 속도를 조절**하는 효과를 얻을 수 있다.
+- `r.run()`을 통해, 작업을 요청한 스레드가 직접 작업을 수행하는 것을 알 수 있다.
+
+```java
+new ThreadPoolExecutor(1, 1, 0, TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy());
+```
+
+```java
+public static class CallerRunsPolicy implements RejectedExecutionHandler {
+    public CallerRunsPolicy() { }
+
+    public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
+        // 스레드 풀이 종료(shutdown)되지 않은 경우에만
+        // 작업을 요청한 스레드가 직접 run()을 호출한다.
+        if (!e.isShutdown()) {
+            r.run();
+        }
+    }
+}
+```
+
+### 5.4. 사용자 정의 (RejectedExecutionHandler)
+
+- 개발자가 **`RejectedExecutionHandler` 인터페이스를 직접 구현**하여 자신만의 맞춤형 거절 처리 전략을 정의할 수 있다.
+- 이를 통해 특정 요구사항에 맞는 유연한 작업 거절 방식을 설정할 수 있다.
