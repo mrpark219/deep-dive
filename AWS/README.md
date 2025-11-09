@@ -7,3 +7,7 @@
 ## 2. IAM
 
 [IAM](./iam.md)
+
+## 3. EC2
+
+[EC2](./ec2.md)
