@@ -269,3 +269,63 @@
 - 내가 보유한 IP 주소를 AWS에서 사용 가능하다.
 - **리전 단위**이다.
 - 연결하지 않고 보유하기만 해도 비용이 발생한다(**IPV4 비용 발생**).
+
+## 11. EC2 유저데이터와 인스턴스 메타데이터
+
+### 11.1. 유저 데이터(User Data)
+
+- EC2 인스턴스의 **최초 실행 시** 지정한 스크립트를 실행할 수 있다.
+  - 별도 설정을 통해서 재부팅마다 실행하도록 설정도 가능하다.
+- 두 가지 모드가 있다.
+  - Shell Script
+  - cloud-init: 리눅스 이미지의 부트스트래핑을 위한 오픈소스 애플리케이션이다.
+- 주요 사용 사례는 다음과 같다.
+  - EC2 인스턴스 설정(보안 설정, 인스턴스 설정 등)
+  - 외부 패키지 다운로드
+  - 설치 애플리케이션 실행
+  - 기타 EC2 실행 시 필요한 동작
+- 프로비전이 시작된 후 유저 데이터가 실행된다.
+
+### 11.2. 인스턴스 메타데이터(Instance Metadata)
+
+- 실행 중인 인스턴스를 구성 또는 관리하는 데 사용될 수 있는 **인스턴스 관련 데이터**이다.
+- 인스턴스 메타데이터는 호스트 이름, 이벤트, 보안 그룹과 같은 범주로 분류된다.
+- EC2 인스턴스의 속성 및 정보 데이터이다.
+  - AMI ID, IPv4/IPv6 주소, EBS 맵핑, 보안 그룹 연동 상황, IAM 역할 연동 등
+- 실행 중인 EC2 인스턴스의 메타데이터는 **IMDS(Instance Metadata Service)**로 조회가 가능하다.
+  - HTTP Endpoint를 지원한다.
+  - IP 주소: **169.254.169.254**(IPv4), **fd00:3c2::254**(Ipv6)
+- 두 가지 버전이 있다.
+  - **IMDS V1**: Request/Response 기반
+  - **IMDS v2**: 세션 기반(default)
+- 주요 사용 사례는 다음과 같다.
+  - 인스턴스별 설정, **IAM 임시 자격증명 조회** 등(AWS CLI, SDK 등이 내부적으로 활용)
+- EC2 실행 시 메타데이터 엑세스 가능 여부를 설정할 수 있다.
+  - 기본적으로 활성화되어 있다.
+  - 버전 선택이 가능하다.
+- 가격은 무료이다.
+- 참고로 Tag 조회의 경우, 별도로 활성화해야 Metadata로 Tag 조회가 가능하다.
+  - 활성화하지 않을 경우 목록에서 보이지 않는다.
+
+#### Instance Metadata Service V1
+
+- 별도의 보안 인증이 필요 없는 **Request/Response 기반**이다.
+  - Link Local IP(169.254.169.254)를 사용하기 때문에 해당 EC2 인스턴스에서만 요청이 가능하다.
+- **CloudWatch Metric**을 활용해서 조회 횟수를 기록할 수 있다.
+
+```bash
+curl http://169.254.169.254/latest/meta-data/tags/instance/Name
+```
+
+#### 11.2.2. Instance Metadata Service V2
+
+- 보안 토큰을 발급받아 요청할 때마다 토큰을 사용해 인증하는 **세션 방식**이다.
+  - 토큰의 유효기간은 1초에서 최대 6시간이다.
+- **IMDSv1**보다 높은 보안 수준을 제공한다.
+  - IAM 정책 등을 활용하여 EC2 인스턴스가 IMDS V2를 사용하도록 강제할 수 있다.
+
+```bash
+TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-id
+curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/tags/instance/Name
+```
