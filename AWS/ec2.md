@@ -329,3 +329,14 @@ TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-meta
 curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-id
 curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/tags/instance/Name
 ```
+
+## 12. EC2 권한 부여 방법
+
+- **IAM 자격 증명** 등록
+  - IAM 사용자를 생성하고 **IAM 자격 증명**을 발급받아 EC2에 등록한다.
+  - **AWS Configure**를 통해 자격 증명을 파일로 등록한다(`~/.aws/credentials`).
+  - 이 방식은 관리가 어렵고 바꾸기 힘들다.
+- **IAM 역할** 부여
+  - 권한이 부여된 **IAM 역할**을 만들고 EC2에 부여한다.
+  - 이 방식은 관리가 쉽고 교체가 쉽다.
+  - 내부적으로 지속적으로 자격 증명을 변경하여 **뛰어난 보안성**을 제공한다.
