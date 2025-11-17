@@ -396,3 +396,55 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta
       - 가장 오래된 인스턴스부터
       - 가장 최근 인스턴스부터 등
       - **Lambda**를 활용해서 커스텀 정책 적용이 가능하다.
+
+## 15. ELB(Elastic Load Balancer)
+
+- 둘 이상의 가용 영역에서 EC2 인스턴스, 컨테이너, IP 주소 등 여러 대상에 걸쳐 수신되는 트래픽을 **자동으로 분산**하는 서비스이다.
+
+- 등록된 대상의 상태를 **모니터링**하면서 상태가 양호한 대상으로만 트래픽을 라우팅한다.
+- 다수의 **EC2**에 트래픽을 분산시켜 주는 역할을 한다.
+- **Health Check**를 통해 직접 트래픽을 발생시켜 인스턴스가 살아있는지 체크한다.
+- 지속적으로 **IP 주소**가 바뀌며 IP 고정이 불가능하여 항상 **도메인 기반**으로 사용한다.
+- **Auto Scaling**과 연동 가능하다.
+- **ELB**와 **Auto Scaling**을 조합하면, Auto Scaling을 통해 EC2 인스턴스 숫자를 관리하고 ELB를 통해 분산 트래픽을 처리한다.
+- 총 4가지의 종류가 있다.
+
+### 15.1. Application Load Balancer
+
+![https://docs.aws.amazon.com/ko_kr/elasticloadbalancing/latest/application/images/component_architecture.png](./images/ec2/2025-11-18-07-26-03.png)
+
+- 똑똑한 로드 밸런서이며 **OSI Model Layer 7**에서 동작한다.
+- 트래픽을 **모니터링**하여 라우팅이 가능하다.
+- 비용은 실행된 시간 및 시간당 사용된 **로드 밸런서 용량 단위(LCU)**에 대해 부과된다.
+- **LCU(Load Balancer Capacity Units)**는 ALB가 트래픽을 처리하는 단위이다.
+
+### 15.2. Network Load Balancer
+
+- 빠른 로드 밸런서이며 **OSI Model Layer 4**에서 동작한다.
+- **TCP**, **UDP** 기반의 빠른 트래픽 분산을 지원한다.
+- **Elastic IP** 할당이 가능하여 IP 고정이 가능하다.
+
+### 15.3. Classic Load Balancer
+
+- 예전에 사용되었던 타입으로 현재는 잘 사용되지 않는 **레거시** 모델이다.
+
+### 15.4. Gateway Load Balancer
+
+- 먼저 트래픽을 체크하며 **OSI Layer 3**에서 동작한다.
+- **가상 어플라이언스** 배포 및 확장 관리를 위한 서비스이다.
+
+## 16. 대상 그룹(Target Group)
+
+- ELB가 라우팅할 **대상의 집합**이다.
+- 구성 요소 중 **대상 종류**에는 **Instance**, **IP**, **Lambda**, **ALB**가 있다.
+- **프로토콜**은 **HTTP**, **HTTPS**, **gRPC**, **TCP** 등을 지원한다.
+- 기타 설정으로 **트래픽 분산 알고리즘**, **고정 세션** 등이 있다.
+
+## 17. 리스너
+
+- ALB로 들어오는 요청을 처리하는 **주체**이다.
+- 들어오는 트래픽의 **프로토콜**과 **포트** 단위로 구성된다.
+- **규칙(Rule)**이 ALB에서 어떤 요청을 받을지, 요청을 어떻게 어디로 처리할지 결정한다(예: 8080 포트로 트래픽을 받아 A 대상 그룹의 80번 포트로 배분).
+- 규칙을 활용해 다양한 **조건**에 따라 트래픽 배분이 가능하다.
+- 활용 가능한 조건에는 **Header**, **QueryString**, **sourceIP**, **Method** 등이 있다.
+- 들어온 요청의 처리 방식에는 **forward**, **redirect**, **fixed-response**, **cognito** 등이 있다.
