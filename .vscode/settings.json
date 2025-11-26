@@ -2,5 +2,8 @@
     "pasteImage.basePath": "${currentFileDir}",
     "pasteImage.path": "${currentFileDir}/images/${currentFileNameWithoutExt}/",
     "pasteImage.prefix": "./",
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "cSpell.words": [
+        "NACL"
+    ]
 }
