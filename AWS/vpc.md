@@ -231,3 +231,28 @@
   - **VPC만 생성**하는 방법이다.
   - **VPC와 다른 리소스**를 같이 생성하는 방법이다.
     - VPC, 서브넷, 라우팅 테이블, 네트워크 연결 등을 **쉽게 생성**할 수 있다.
+
+## 9. VPC Endpoint
+
+- 인터넷 게이트웨이, NAT 디바이스, VPN 연결 등을 필요로 하지 않고 **AWS PrivateLink** 구동 지원 AWS 서비스에 비공개로 연결할 수 있는 **지원 서비스**이다.
+- VPC의 인스턴스는 서비스의 리소스와 통신하는 데 **퍼블릭 IP** 주소를 필요로 하지 않으며, 트래픽은 Amazon 네트워크를 벗어나지 않는다.
+- 외부 인터넷을 거치지 않고 **AWS 서비스**에 연결해 주는 **리소스**이다.
+- **상시 비용**이 발생한다.
+
+### 9.1. Interface Endpoint
+
+![https://docs.aws.amazon.com/ko_kr/vpc/latest/privatelink/images/access-with-privatelink.png](./images/vpc/2025-11-28-20-28-01.png)
+
+- **ENI(Elastic Network Interface)** 기반이다.
+- **Private IP**를 만들어 서비스로 연결한다.
+- SQS, SNS, Kinesis, SageMaker 등 **많은 서비스**를 지원한다.
+- **서브넷** 지정이 필요하다.
+- **보안 그룹** 및 **정책**을 통해 보호 가능하다.
+
+### 9.2. Gateway Endpoint
+
+![https://docs.aws.amazon.com/ko_kr/vpc/latest/privatelink/images/gateway-endpoints.png](./images/vpc/2025-11-28-20-27-30.png)
+
+- **라우팅 테이블**에서 경로의 **대상**으로 지정하여 사용한다.
+- **S3** 및 **DynamoDB**를 지원한다.
+- **정책** 적용은 가능하지만, **보안 그룹**은 적용할 수 없다.
