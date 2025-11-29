@@ -256,3 +256,48 @@
 - **라우팅 테이블**에서 경로의 **대상**으로 지정하여 사용한다.
 - **S3** 및 **DynamoDB**를 지원한다.
 - **정책** 적용은 가능하지만, **보안 그룹**은 적용할 수 없다.
+
+## 10. VPC Peering
+
+![https://docs.aws.amazon.com/ko_kr/vpc/latest/peering/images/peering-intro-diagram.png](./images/vpc/2025-11-29-09-27-37.png)
+
+- 프라이빗 IPv4 주소 또는 IPv6 주소를 사용하여 두 VPC 간에 트래픽을 라우팅할 수 있도록 지원하는 **네트워킹 연결**이다.
+- 동일한 네트워크에 속하는 것처럼 VPC의 인스턴스가 서로 **통신**할 수 있다.
+- 두 개의 다른 VPC를 연결하여 VPC 안의 **리소스**끼리 통신이 가능하도록 설정하는 것이다.
+- **다른 리전**, **다른 계정**의 VPC끼리 연결이 가능하다.
+- **CIDR Range**의 중첩은 불가능하다.
+- **Transitive Peering**은 불가능하다(중간 네트워크가 다리 역할을 하는 것).
+  - 통신을 위해서는 **직접 연결**되어 있어야 한다.
+  - 혹은 **Transit Gateway**를 이용해야 한다.
+- Peering 설정 이후 **라우팅 테이블**을 업데이트해서 경로 설정이 필요하다.
+
+## 11. Transit Gateway
+
+![https://docs.aws.amazon.com/ko_kr/vpc/latest/tgw/images/transit-gateway-overview.png](./images/vpc/2025-11-29-09-27-55.png)
+
+- **중앙 허브**를 통해 VPC들과 온프레미스 네트워크를 연결하는 **서비스**이다.
+- 복잡한 **Peering 관계**를 제거하여 네트워크 구조를 **간소화**한다.
+- 리전 간에는 서로 다른 **Transit Gateway**끼리 연결한다.
+
+## 12. VPN(Virtual Private Network)
+
+- 온프레미스 네트워크, 원격 사무실, 클라이언트 디바이스 및 AWS 글로벌 네트워크 사이에서 **보안 연결**을 설정한다.
+- **Site-to-Site VPN**
+  - 데이터센터와 AWS를 연결하는 **하드웨어-하드웨어** 연결(1:1)이다.
+  - **IPSec 프로토콜**을 사용한다.
+- **Client VPN**
+  - AWS와 온프레미스/VPN 장비와 사용자의 PC를 연결하는 **하드웨어-소프트웨어** 연결(1:N)이다.
+  - PC가 **네트워크 내부**에 있는 것처럼 작동한다.
+  - **TLS 프로토콜**을 사용한다.
+
+## 13. AWS Direct Connect
+
+![https://docs.aws.amazon.com/images/whitepapers/latest/aws-vpc-connectivity-options/images/aws-direct-connect.png](./images/vpc/2025-11-29-09-28-15.png)
+
+- AWS 리소스에 대한 **최단 경로**를 제공하는 서비스이다.
+- AWS와 온프레미스 간에 **Direct Connect Location**을 경유한 **전용선**을 통해 연결한다.
+- **외부 인터넷**과 분리되어 있다.
+  - 외부에서 접근이 불가능하기 때문에 높은 **보안**을 제공한다.
+  - 인터넷 환경에 상관없이 일정한 **속도**를 보장한다.
+- **Direct Connect Gateway**를 통해 여러 리전의 VPC를 한 번에 연결할 수 있다.
+- **성능**이 좋고 빠르지만, **비용**이 비싸고 설치에 **시간**이 오래 걸린다.
