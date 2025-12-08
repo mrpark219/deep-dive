@@ -99,3 +99,71 @@
   - 토큰 생성을 위해서는 `rds-db:connect` **권한**이 필요하다.
   - **IAM Condition**을 활용하여 세밀한 제어(특정 태그, IP, 시간대 등)가 가능하다.
 - **Kerberos 인증**을 지원한다.
+
+## 5. Amazon Aurora
+
+![https://docs.aws.amazon.com/ko_kr/AmazonRDS/latest/AuroraUserGuide/images/Con-AZ.png](./images/rds/2025-12-09-07-11-29.png)
+
+- 상용 데이터베이스 비용의 1/10 수준으로 **완전한 MySQL 및 PostgreSQL 호환성**을 통해 전 세계적으로 탁월한 **고성능** 및 **가용성**을 제공하는 서비스이다.
+- **MySQL**의 5배, **PostgreSQL**의 3배 처리량을 제공한다.
+- AWS에서 클라우드 환경에 최적화된 **엔진**을 자체 개발하여 사용한다.
+- **용량**이 자동으로 증감한다(10GB부터 시작해서 10GB 단위로 최대 **128TB**까지 증가).
+- **연산 능력**은 최대 128vCPU와 1024GiB 메모리까지 확장 가능하다.
+- 데이터를 **분산 저장**하며 **Quorum 모델**을 사용한다.
+  - 각 AZ마다 2개씩, 최소 3개 이상의 AZ에 총 **6개의 복제본**을 저장한다.
+  - 3개 이상 손실 전까지 **쓰기** 능력을 유지한다.
+  - 4개 이상 손실 전까지 **읽기** 능력을 유지한다.
+  - 손실된 복제본은 **자가 치유(Self-healing)** 기능을 통해 지속적으로 검사 및 복구한다.
+
+### 5.1. Amazon Aurora DB Clusters
+
+![https://docs.aws.amazon.com/ko_kr/AmazonRDS/latest/AuroraUserGuide/images/aurora_architecture.png](./images/rds/2025-12-09-07-11-45.png)
+
+- 하나 이상의 **DB 인스턴스**와 데이터를 관리하는 **Cluster 볼륨**을 묶은 단위이다.
+- **Cluster 볼륨**은 데이터베이스의 저장 공간으로, 여러 가용 영역에 걸쳐 데이터를 **복제 분산 저장**한다.
+- 구성은 다음과 같다.
+  - **Primary(Write) DB 인스턴스**: Read/Write 모두 가능한 인스턴스로 클러스터당 **하나**만 존재한다.
+  - **Aurora Replica(Reader DB 인스턴스)**: Cluster 볼륨에 접근 가능한 Read-only 인스턴스로 클러스터당 최대 **15개**까지 생성 가능하다.
+- 인스턴스 간에 **Async 복제**를 수행한다.
+- Writer 장애 시 자동으로 Replica 중 하나가 Writer로 **Failover**된다. 데이터 손실 없이 승격 가능하여 **고가용성(High Availability)** 을 확보한다.
+
+### 5.2. Aurora Global Database
+
+- 전 세계 리전에서 **1초 내**의 지연 시간으로 데이터 액세스가 가능하다.
+- **재해 복구(DR)** 용도로 활용 가능하다.
+  - 유사시 보조 리전 중 하나를 승격하여 메인으로 활용한다.
+  - **RPO(복구 목표 지점)** 는 1초이다.
+    - **RPO(Recovery Point Objective)**: 시스템 장애 시 허용 가능한 **최대 데이터 손실량**이다.
+  - **RTO(복구 목표 시간)** 는 1분 미만이다.
+    - **RTO(Recovery Time Objective)**: 장애 발생 시 시스템을 원 상태로 복원하는 데 소요되는 **지연 시간**이다.
+
+### 5.3. Aurora의 백업
+
+- **읽기 복제본(Read Replica)** 을 지원한다(Aurora Replica와 다른 개념).
+  - MySQL의 **Binary log(Binlog)** 복제 방식을 사용한다.
+  - 단, **다른 리전**에만 생성 가능하다.
+- RDS와 마찬가지로 **자동/수동 백업**이 가능하다.
+  - **자동 백업**의 경우 1~35일 동안 **S3**에 보관된다.
+  - **수동 백업(스냅샷)** 이 가능하다.
+  - 백업 데이터를 복원할 경우 **새로운 데이터베이스**를 생성한다.
+
+### 5.4. Aurora 데이터베이스 클로닝
+
+- 기존 데이터베이스에서 **새로운 데이터베이스**를 복제하는 기능이다.
+- 스냅샷을 통해 새로운 데이터베이스를 생성하는 것보다 **빠르고 저렴**하다.
+- **Copy-On-Write 프로토콜**을 사용하므로, 기존 클러스터를 삭제해도 복제된 DB는 정상 동작한다.
+
+### 5.5. Backtrack(역추적)
+
+- 기존 DB를 특정 시점으로 **되돌리는** 기능이다(새로운 DB 생성이 아님).
+- DB 관리 실수를 쉽게 만회 가능하며, 새로운 DB 생성보다 훨씬 **빠르다**.
+- 앞뒤로 시점을 이동할 수 있어 원하는 지점을 빠르게 찾을 수 있다.
+- **Backtrack Window** 설정이 필요하다.
+  - **Target Backtrack Window**: 어느 시점만큼 되돌릴 데이터를 저장할지 설정하는 목표치이다(지정 시점 이전으로는 Backtrack 불가능).
+  - **Actual Backtrack Window**: 실제로 되돌릴 수 있는 시간이다(Target보다 작아야 함).
+- Backtrack 활성화 시 시간당 DB의 변화를 저장하며, 저장된 용량만큼 **비용**을 지불한다.
+  - DB 변화가 많을수록 로그가 많아져 비용이 증가한다.
+  - DB 로그가 너무 많아 Actual Window가 Target Window보다 작을 경우 **알림**이 발생한다.
+- **MySQL 호환** 버전에서만 사용 가능하다.
+  - Aurora 생성 시 **Backtrack**을 설정한 DB만 사용 가능하며, 스냅샷 복구 혹은 **Clone**을 통해 기능 활성화가 가능하다.
+- 사용 시 **다운 타임**이 존재한다.
