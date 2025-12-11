@@ -212,3 +212,43 @@
 - **ACU**는 생각보다 민감하게 변동된다.
   - 유휴 상태에서 단순한 **로그 조회**로도 다시 ACU가 올라갈 수 있다.
   - 툴(Workbench, Datagrip 등)로 **연결**을 지속해둔 경우 유휴 상태로 전환되지 않을 수 있다.
+
+## 7. AWS Secrets Manager
+
+- 애플리케이션, 서비스, IT 리소스에 액세스할 때 필요한 **보안 정보**를 보호하는 서비스이다.
+- 데이터베이스 **자격 증명**, **API 키** 등의 보안 정보를 수명 주기에 걸쳐 손쉽게 **교체**, **관리**, **검색**할 수 있다.
+  - **RDS**, **RedShift** 등의 암호를 안전하게 저장하고 관리한다.
+- 보안 정보의 주기적인 **교체(Rotation)** 를 지원한다.
+  - 일정 주기로 자동으로 RDS의 암호를 교체하고 데이터베이스에 **적용**한다.
+- **CloudFormation** 등 다른 서비스와 연동하여 안전한 보안 확보가 가능하다.
+- **RDS** 및 관련 서비스(**RDS Proxy** 등)와 연동된다.
+- 바로 삭제가 불가능하며, 최소 **7일**의 대기 기간이 필요하다.
+- AWS System Manager Parameter Store와 유사하다.
+  - Parameter Store는 **Rotation 기능이 없지만 무료**이다.
+
+## 8. Amazon RDS Proxy
+
+![https://docs.aws.amazon.com/ko_kr/AmazonRDS/latest/UserGuide/images/Proxy-Overview.png](./images/rds/2025-12-11-22-23-12.png)
+
+- AWS에서 제공하는 RDS의 **Connection Pool 서비스**이다.
+  - **Connection Pool**: 데이터베이스와의 연결을 관리하고 재사용하여 애플리케이션의 **성능**을 향상시키는 기능이다.
+  - RDS로 연결하는 Connection들을 중간에서 관리하여 효율적으로 **배분** 및 **관리**한다.
+- AWS의 **EC2** 혹은 **Lambda**와 같이 대규모 **Connection**이 필요할 경우 활용 가능하다.
+- **AWS Secrets Manager(User/Password) 인증** 혹은 **IAM 인증(`rds-db:connect` 권한)** 을 지원한다.
+- 주의 사항
+  - **VPC 내부**에서만 활용 가능하며, **Public Internet**에서 접근이 불가능하다(데이터베이스의 접근 가능 여부와 무관).
+  - 별도의 **Endpoint**를 보유하므로 RDS와 다른 Endpoint 사용이 필요하며, 추가로 **Endpoint** 생성이 가능하다.
+  - 기타 **DB 엔진**별 Port 및 **제약 사항**이 존재한다.
+
+### 8.1. RDS Proxy와 Secrets Manager
+
+#### Proxy -> DB
+
+- **RDS Proxy**가 실제 RDS 데이터베이스에 접속하기 위해서는 **Secrets Manager**가 필수이다.
+- **Secrets Manager**에 RDS의 **ID**와 **비밀번호**를 저장해 두어야 한다.
+- 사용하려는 **DB 계정**마다 별도의 **Secret**을 생성해야 한다.
+
+#### Client -> Proxy
+
+- **애플리케이션**이 RDS Proxy에 접속할 때는 **IAM 인증**과 **비밀번호** 방식 모두 사용 가능하다.
+- 단, **IAM 인증** 방식을 사용했더라도 Proxy에서 DB에 접속할 때는 **Secrets Manager**에 저장된 ID와 비밀번호를 사용한다.
