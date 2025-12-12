@@ -23,3 +23,7 @@
 ## 6. RDS
 
 [RDS](./rds.md)
+
+## 7. CloudWatch
+
+[CloudWatch](./cloud-watch.md)
