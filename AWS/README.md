@@ -27,3 +27,7 @@
 ## 7. CloudWatch
 
 [CloudWatch](./cloud-watch.md)
+
+## 8. AWS 디커플링 서비스
+
+[AWS 디커플링 서비스](./aws-decoupling-services.md)
