@@ -119,8 +119,45 @@
 - 메시지 요청 이후 다른 주체가 해당 메시지를 요청할 수 없는 **기간**이다.
   - 일종의 **Lock** 기능으로, 해당 기간 동안 다른 주체는 메시지 요청이 불가능하다.
 - **기본 30초**이며, 최소 0초에서 최대 **12시간**까지 설정 가능하다.
-- Visibility Timeout 기간 내에 처리(삭제)되지 않은 메시지는 자동으로 다른 주체에게 **공개(재처리 가능)**된다.
+- Visibility Timeout 기간 내에 처리(삭제)되지 않은 메시지는 자동으로 다른 주체에게 **공개(재처리 가능)** 된다.
   - 메시지를 처리하기 충분하되, 오류 상황에 적절히 대응할 수 있는 시간 설정이 필요하다.
 - 기본적으로 **Queue 단위**로 설정하나 **메시지 단위**로도 변경 가능하다.
   - 즉 필요하다면 런타임에 Visibility Timeout **수정**이 가능하다.
 - Visibility Timeout이 만료되면 메시지는 다시 **처리 가능한 상태**로 돌아간다.
+
+### 2.6. SQS 보안
+
+- **Access Policy**: 어떤 주체가 SQS Queue에 접근하여 메시지를 보내거나 가져올 수 있는지 정의하는 **리소스 기반 정책**이다.
+  - 주체에게 IAM 권한이 없더라도 **Access Policy**에 권한이 명시되어 있으면 Queue 사용이 가능하다.
+- **암호화**를 지원한다.
+  - **SQS-SSE**(Encryption at rest) 및 **SQS-KMS**를 지원한다(S3와 유사).
+  - **Message Body**만 암호화하며, Metadata, Timestamp 등은 암호화하지 않는다.
+
+#### IAM 정책의 종류
+
+- **Identity-based policies(자격 증명 기반 정책)**
+  - **자격 증명**(IAM 유저, 그룹, 역할)에 부여하는 정책이다.
+  - 해당 자격 증명이 **무엇을 할 수 있는지** 허용한다.
+- **Resource-based policies(리소스 기반 정책)**
+  - **리소스**(S3, SQS, VPC Endpoint, KMS 등)에 부여하는 정책이다.
+  - 해당 리소스에 **누가 무엇을 할 수 있는지** 허용 가능하다.
+  - 예: SQS 대기열에 **Lambda Service**가 접근 가능하도록 설정한다.
+
+### 2.7. Dead Letter Queue (DLQ)
+
+- 시스템 오류로 처리할 수 없는 메시지를 임시로 저장하는 특수한 유형의 **메시지 대기열**이다.
+- 설정한 **재시도 횟수(MaxReceiveCount)** 보다 많이 실패했을 경우 DLQ로 전달된다.
+- 추후 **재처리(Redrive)** 가 가능하다.
+
+### 2.8. Monitoring
+
+- 기본적으로 **CloudTrail**로 API 로깅이 가능하다.
+- **CloudWatch** 기본 지표로 다양한 Metric을 제공한다.
+- **주요 메트릭**은 다음과 같다.
+  - **ApproximateAgeOfOldestMessage**: 가장 오래된 메시지의 **나이**(근사값)이다.
+  - **ApproximateNumberOfMessagesNotVisible**: 현재 **In-Flight** 중(처리 중)인 메시지의 수(근사값)이다.
+  - **ApproximateNumberOfMessagesVisible**: 현재 **Stored**, 즉 대기 중인 메시지의 수(근사값)이다.
+  - **NumberOfEmptyReceives**: 메시지 요청 시 **빈 응답**이 전달된 횟수이다.
+  - **NumberOfMessagesReceived**: 메시지 요청에 따라 **전달된** 메시지의 개수이다.
+  - **NumberOfMessagesSent**: Queue에 **도착**한 메시지의 개수이다.
+  - **SentMessageSize**: Queue에 도착한 메시지의 **크기**이다.
