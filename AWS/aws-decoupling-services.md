@@ -234,3 +234,29 @@
   - 매칭 시 메시지를 **발송**하고, 불일치 시 메시지를 **전달하지 않는다**.
 - **필터링 가능 대상**은 **Message Body**와 **Message Attributes**이다.
   - **AND**, **OR** 조건 사용이 가능하다.
+
+### 3.6. Amazon SNS 보안
+
+- **Access Policy**: 어떤 주체가 SNS에 접근하여 메시지를 보내거나 구독할 수 있는지 정의하는 **리소스 기반 정책**이다.
+  - 주체에게 IAM 권한이 없더라도 **Access Policy**에 권한이 명시되어 있으면 **권한 부여**가 가능하다.
+  - 예: IAM 사용자에 아무 권한이 없더라도 Access 정책에 권한이 명시되어 있으면 SNS로 **퍼블리시**가 가능하다.
+- **암호화**를 지원한다.
+  - **KMS**를 활용하여 **Server Side Encryption**을 구현한다.
+  - **Body**만 암호화하며, **Metadata**, **Timestamp** 등은 암호화하지 않는다.
+
+### 3.7. Amazon SNS Monitoring
+
+- 기본적으로 **CloudTrail**로 API 로깅이 가능하다.
+- **CloudWatch** 기본 지표로 다양한 Metric을 제공한다.
+- **주요 메트릭**은 다음과 같다.
+  - **NumberOfMessagesPublished**: **발행된** 메시지 숫자이다.
+  - **NumberOfNotificationsDelivered**: 구독 대상에게 **전달된** 메시지 숫자이다.
+  - **PublishSize**: 도착한 메시지의 **크기**이다.
+
+### 3.8. Amazon SNS 기타 기능
+
+- **Amazon SNS Data Protection**: SNS 메시지 중 **민감한 정보**를 감지하거나 검열해 주는 서비스이다.
+  - **Data Protection Policy**를 기반으로 필터링한다.
+  - **Inbound Message** / **Outbound Message** 모두 확인한다.
+- 메시지 **순서 보장** 및 **중복 제거**를 지원한다(FIFO 토픽).
+- 메시지 **보관** 및 **리플레이** 기능을 제공한다(FIFO 토픽).
