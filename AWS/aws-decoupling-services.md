@@ -267,3 +267,31 @@
   - **서울 리전(ap-northeast-2)** 에서는 사용이 불가능하다(도쿄, 버지니아 등 사용 필요).
 - Sandbox 모드 해제 및 지출 한도 상향 등을 위해 **서포트 케이스** 요청이 필요하다.
 - 승인까지 **수 주**의 기간이 소요될 수 있으므로 **사전 준비**가 필수적이다.
+
+## 4. FIFO
+
+### 4.1. SQS FIFO
+
+- 기본 SQS(Standard)와 달리 메시지의 **순서**를 보장하며, 단 **한 번**만 전달한다(**Exactly-Once Processing**).
+- 대신 **성능(처리량)** 저하가 존재한다.
+  - **High Throughput** 모드로 어느 정도 완화 가능하다.
+- Queue 이름이 반드시 `.fifo`로 끝나야 한다.
+
+#### Deduplication ID (중복 제거 ID)
+
+- SQS에서 각 메시지의 **중복 여부**를 판단하기 위한 **고유 토큰**이다.
+- 메시지를 전송할 때 부여하며, 특정 **Deduplication ID**를 가진 메시지가 SQS에 도달하면 **5분** 동안 같은 ID를 가진 메시지는 무시된다.
+  - API 호출은 **성공**으로 반환되지만, 메시지는 큐에 **저장되지 않는다**.
+- **두 가지 제공 방식**이 있다.
+  - **Content-Based**: SQS가 자동으로 메시지 **Body**의 **SHA-256 해시**를 생성하여 ID로 사용한다.
+    - **Message Attribute**는 해시 생성에 포함되지 않는다.
+  - **Explicit**: **Producer**가 직접 Deduplication ID를 생성해서 전달한다.
+
+#### Message Group ID
+
+- **FIFO Queue** 내부의 일종의 **채널** 개념이다.
+- **Message Group ID** 단위로 **순서 보장** 및 **전달**이 이루어진다.
+  - 서로 다른 Message Group ID 간에는 **순서**가 보장되지 않는다.
+- SQS FIFO에서는 동일한 Message Group ID를 가진 메시지는 동시에 **하나**만 처리 가능하다.
+  - 하나의 Message Group에서 앞선 메시지가 처리(삭제)되지 않으면 뒤따르는 메시지들은 모두 **대기**한다.
+- SNS FIFO에서 **SQS FIFO**로 전달 시 Message Group ID도 함께 **전달**된다.
