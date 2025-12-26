@@ -295,3 +295,55 @@
 - SQS FIFO에서는 동일한 Message Group ID를 가진 메시지는 동시에 **하나**만 처리 가능하다.
   - 하나의 Message Group에서 앞선 메시지가 처리(삭제)되지 않으면 뒤따르는 메시지들은 모두 **대기**한다.
 - SNS FIFO에서 **SQS FIFO**로 전달 시 Message Group ID도 함께 **전달**된다.
+
+### 4.2. SNS FIFO
+
+- SNS의 메시지 전달을 **FIFO**로 처리할 수 있는 모드이다.
+- **순서 보장**과 **중복 제거**라는 두 가지 효과가 있다.
+- **SQS FIFO** 및 **Standard Queue**와만 연동 가능하다.
+  - 이메일, 휴대폰(SMS), HTTP 엔드포인트 등 **일반적인 Subscriber**와는 연동이 불가능하다.
+- **메시지 그룹**, **메시지 필터링** 등의 기타 기능을 제공한다.
+- 주제(Topic) 이름이 반드시 `.fifo`로 끝나야 한다.
+
+#### Message 순서
+
+- 일반적인 **SNS + SQS** 조합은 순서를 **보장하지 않는다**.
+  - 즉 메시지가 발송된 순서와 별도로 대상이 수신한다.
+  - 순서를 보장하기 위해서는 **SNS FIFO + SQS FIFO** 조합이 필요하다.
+- 각 Subscription에 전달되는 메시지별 순서는 다를 수 있지만, **받는 메시지의 순서**는 동일하다.
+- **Message Sequence Number**: 연속적이지는 않지만 항상 **증가**하는 번호이다.
+  - SNS FIFO에서 메시지를 받아 발송할 때 부여한다.
+  - **Message Body**에 포함되나, **Raw Message Delivery** 활성화 시에는 포함되지 않는다.
+
+#### Message Group ID
+
+- SNS/SQS FIFO 내부의 일종의 **채널** 개념이다.
+- **Message Group ID** 단위로 **순서 보장** 및 전달이 이루어진다.
+- SNS FIFO에서 Message Group ID를 전달했을 때, 대상이 **SQS FIFO**라면 Message Group ID가 같이 전달된다.
+
+#### Filtering
+
+- **메시지 필터링**을 통해 모든 메시지 대신 **특정 메시지**만 수신 가능하다.
+- 각 **Subscription Filter Policy** 설정이 가능하다.
+  - **Filter Policy**: 메시지의 **Body** 혹은 **Attributes** 단위로 원하는 메시지를 매칭한다.
+  - 매칭 시 메시지를 **발송**하며, 불일치 시 메시지를 **전달하지 않는다**.
+
+#### Deduplication ID
+
+- **Deduplication ID**를 기반으로 중복된 메시지를 제거한다.
+  - **5분** 이내에 같은 Deduplication ID를 가진 메시지가 전달되면 요청은 성공하지만 실제로는 **전달되지 않는다**.
+  - SNS가 전달된 **이후에도** ID는 트래킹된다.
+- SNS에 전달된 메시지 **Body**를 기반으로 Deduplication ID 생성이 가능하다(**Content-Based**).
+  - 메시지 Body의 **Hash**를 기반으로 ID를 생성한다.
+  - **Attribute**는 Hash에 반영하지 않는다.
+
+#### Message Archive/Replay
+
+- SNS FIFO에 전달된 메시지를 **저장**하고 필요에 따라 **Replay**가 가능하다.
+- 사용 사례
+  - 메시지 **전달 과정**의 오류를 복구할 때 사용한다.
+  - 기존 애플리케이션의 **장애 복구**에 사용한다.
+  - 신규 애플리케이션의 **Sync**를 맞출 때 사용한다.
+- **메시지 보관 기간**은 **1~365일** 설정 가능하다.
+- 저장 시 및 처리 시 **추가 보관 비용**이 발생한다.
+- **Replay** 시 **시간**을 정해서 Replay가 가능하다.
