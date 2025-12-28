@@ -423,3 +423,27 @@
 - **CloudWatch**에서 다양한 지표를 수집한다.
   - **Basic**: **기본 지표** 수집 모드로 스트림 단위의 지표를 **1분** 단위로 수집한다.
   - **Enhanced**: **추가 비용**으로 **샤드 단위**의 지표를 **1분** 단위로 수집한다.
+
+### 5.3. Amazon Data Firehose
+
+- Amazon S3, Amazon Redshift, Amazon OpenSearch Service, Splunk 및 타사 서비스(Datadog, LogicMonitor, Dynatrace, MongoDB, New Relic, Coralogix) 등의 대상에 실시간 스트리밍 데이터를 전송하는 **완전 관리형 서비스**이다.
+- 데이터를 원하는 주체로 **전달**해 주는 서비스이다.
+  - 주로 데이터를 처리하는 주체(**OpenSearch**, **Redshift**, **Splunk**, **Datadog**)로 전달한다.
+  - 혹은 **S3**에 직접 저장해서 보관하거나 **Athena**로 분석 가능하다.
+- 일정 **버퍼 크기**나 **시간**이 찰 때까지 기다렸다가 하나의 파일로 **Flush** 하는 형식이다.
+  - 전달 대상에 따라 **버퍼 사이즈**와 **시간**이 변동된다.
+
+#### Data Transform
+
+- 데이터가 Firehose를 통과할 때 내용을 **변경**시켜 받는 기능이다.
+  - **데이터 포맷**, **파일 크기** 등 데이터 내용을 원하는 대로 변경 가능하다.
+  - 예: **Apache Parquet**으로 변경, 로그 중 **민감 정보** 제거, **필터링** 등
+- **Apache Parquet** 혹은 **Apache ORC** 데이터 포맷 변경은 기본적으로 지원한다.
+- 다른 변경(CSV 변환, 민감 정보 제거 등)은 **AWS Lambda** 서비스를 호출해서 수행한다.
+  - 기본 **1MB** 단위에서 최대 **6MB**(Lambda Payload Limit)로 전달한다.
+
+#### 기타
+
+- S3 저장 시 **오브젝트 Key(파일명)** 지정이 가능하다.
+  - **Athena**에서 활용하기 위한 포맷을 지원한다.
+  - 형식: `<prefix>/year=<yyyy>/month=<MM>/day=<DD>/hour=<HH>/minute=<mm>/<unique_id>.json`
