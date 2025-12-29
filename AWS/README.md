@@ -31,3 +31,7 @@
 ## 8. AWS 디커플링 서비스
 
 [AWS 디커플링 서비스](./aws-decoupling-services.md)
+
+## 9. Route 53
+
+[Route 53](./route53.md)
