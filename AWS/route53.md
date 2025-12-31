@@ -62,3 +62,68 @@
   - 기존 A/AAAA 레코드의 경우 클라이언트는 첫 요청에서 서버가 지원하는 **프로토콜**을 확인할 수 없다(여러 통신 이후 확인 가능).
   - **HTTPS Record**의 경우 첫 통신에서 지원 **프로토콜**까지 확인 가능하다.
     - 즉, 바로 지원하는 프로토콜로 **연결 수립**이 가능하다.
+
+## 3. Amazon Route 53 Health Check
+
+- Route 53에서 설정한 리소스(웹 애플리케이션, 서버 등)의 상태를 **모니터링**하는 기능이다.
+  - **Routing Policy**에서 활용하거나 **Amazon CloudWatch 경보**를 설정하여 알림 처리가 가능하다.
+- **Latency 정보** 확인이 가능하다.
+  - **TCP Connection** 연결 수립까지 걸린 시간이다.
+  - **HTTP/HTTPS First Byte**를 받기까지 걸린 시간이다.
+    - **SSL/TLS Handshake**까지 걸린 시간이다.
+- **CloudWatch Metric**으로 Health Check 상태 기록 및 알람이 가능하다.
+  - **us-east-1** 리전 전용이다.
+
+### 3.1. Health Check 모니터링 대상
+
+- **특정 리소스**
+- **다른 Health Check**
+- **Amazon CloudWatch 경보**
+- **Route 53 Application Recovery Controller**
+
+#### 리소스(Resource)
+
+- **IP 주소**, **도메인**에 주기적으로 요청을 보내 응답 여부를 확인하여 **가용성**을 확인한다.
+- **상태 확인 방법**은 다음과 같다.
+  - 전 세계 다수의 **Health Checker**에서 정해진 프로토콜 및 주기로 요청을 보내서 상태를 확인한다.
+  - 주기는 **10초**(추가 요금) 또는 **30초**이며, Checker 별 Sync는 없다.
+- **두 가지 지표**를 기준으로 상태를 판단한다.
+  - **응답 속도**: HTTP(연결 수립) 4초, TCP 10초, HTTP String Match는 2초 안에 값을 확인해야 한다.
+  - **응답 내용** 및 지정한 **실패 횟수**를 연속으로 넘었는지 여부이다.
+- 해당 기준으로 전체 Health Checker의 **18% 초과**가 Healthy 상태를 유지해야 **Health 상태**로 판단한다.
+- 주의 사항으로 AWS 외부의 엔드포인트를 대상으로 할 경우 **추가 요금**이 발생한다.
+
+#### 리소스 지정 가능 값
+
+- **모드**
+  - **IP 주소**: **IPv4**, **IPv6**를 지원한다(로컬, Private, Multicast 등은 체크 불가능).
+    - **HTTP/HTTPS**의 경우 Status 2xx, 3xx를 정상으로 판단한다.
+    - **TCP** 연결 성공 여부를 확인한다.
+  - **도메인**
+    - **HTTP/HTTPS**의 경우 Status 2xx, 3xx를 정상으로 판단한다.
+    - **IPv4**만 지원하며, **A Record** 외에는 Fail 처리된다.
+- **매칭 문자열**: 응답의 **Body**에 특정 문자열이 있는지 확인한다.
+- **Health Check Region**: 최소 **3개** 이상이어야 한다.
+- 기타 **포트**, **경로**, **주기**, **SNI 지원**, **Latency Graphs**, **Inverse Check** 등을 설정할 수 있다.
+
+#### 다른 Health Check (Calculated Health Check)
+
+- **다른 Health Check**을 모니터링한다.
+  - 예: 3개 이상의 설정한 **Health Check** 상태 검사가 실패할 경우 경보 또는 **Failover**를 수행한다.
+- 상태를 정하기 위한 **Health Check 숫자** 지정이 가능하다.
+  - **모든** Health Check가 성공이면 성공이다(AND).
+  - 단 **하나**의 Health Check가 성공이면 성공이다(OR).
+  - 지정한 Health Check 숫자 중 **N개 이상**이 성공이면 성공이다.
+
+#### CloudWatch 경보
+
+- **CloudWatch 경보 상태**를 모니터링한다.
+- **주의 사항**은 다음과 같다.
+  - CloudWatch 경보의 상태가 아닌 **직접 데이터**를 모니터링한다.
+    - **CloudWatch 경보**보다 조금 더 민감하게 반응한다.
+  - **Standard Resolution**(60초마다 수집) 경보만 모니터링 가능하다.
+  - **Average**, **Minimum**, **Maximum**, **Sum**, **SampleCount**만 모니터링 가능하다.
+  - **Math Metric**은 사용 불가능하다.
+  - CloudWatch 경보가 변경되었을 경우 Route 53 Health Check를 **수동**으로 업데이트해야 한다.
+- 데이터가 충분하지 않을 경우(**Insufficient Data** 상태) 상태 지정이 가능하다.
+  - 예: Insufficient Data일 때 **Healthy**, **Unhealthy**, **Last Known Status**로 설정 가능하다.
