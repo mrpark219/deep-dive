@@ -51,3 +51,55 @@
 ### 2.6. Regional Edge Cache
 
 - **Edge Location**의 상위 단위로, 좀 더 큰 **캐싱 거점**이다.
+
+## 3. Origin
+
+- 뷰어에게 보여줄 **콘텐츠의 원본**이 있는 거점이다.
+- 크게 두 가지 종류(**Amazon S3**, **Custom Origin**)가 있다.
+  - 기본적으로 배포(Distribution) 당 최대 **25개**까지 설정 가능하다.
+
+### 3.1. S3 Origin
+
+- **Amazon S3**를 Origin으로 설정해 콘텐츠를 제공하는 경우이다.
+- 도메인 형식은 `{bucketname}.s3.{region}.amazonaws.com`이다.
+  - 이 형식이 아닐 경우 **Custom Origin**으로 취급된다.
+  - **S3 Static Hosting** 엔드포인트(`http://...`)를 사용하는 경우 **Custom Origin**으로 설정해야 한다.
+- **S3 Origin**만의 추가 기능은 다음과 같다.
+  - **OAC(Origin Access Control)** 또는 **OAI(Origin Access Identity)**를 통한 S3 접근 제한이 가능하다.
+  - **POST/PUT** 등을 통해 직접 S3에 콘텐츠 업데이트가 가능하다.
+  - **S3 Object Lambda** 등을 활용할 수 있다.
+
+#### S3 Origin Access (OAI vs OAC)
+
+- CloudFront를 통해서만 S3에 접근하도록 제한하여, 유저가 S3 URL로 직접 접속하는 것을 **차단**하는 기능이다.
+- **OAI(Origin Access Identity)**
+  - CloudFront만 S3의 파일에 접근할 수 있도록 설정하는 **기존(Legacy)** 안전장치이다.
+  - CloudFront 배포에 특별한 **자격 증명**을 생성하고 이를 S3 버킷 정책에 허용하는 방식이다.
+- **OAC(Origin Access Control)**
+  - **최신 권장** 방식이며, **IAM**을 사용하여 더 세부적이고 유연한 보안 설정이 가능하다.
+  - OAI의 모든 기능을 포함한다.
+
+### 3.2. Custom Origin
+
+- **S3 버킷**을 제외한 모든 Origin을 의미한다.
+  - **MediaStore**, **S3 Static Hosting**, **Lambda Function URL**, **ALB**, **EC2** 및 기타 HTTP 소스가 해당된다.
+- **HTTP** 혹은 **HTTPS**로 접근할지 선택 가능하다.
+- **IP 주소**는 사용 불가능하며 **도메인**만 지정 가능하다.
+
+### 3.3. Origin Group
+
+- **Failover**를 대비하여 **Primary**, **Secondary** 두 Origin을 그룹으로 묶어 관리하는 기능이다.
+- **Primary**에서 실패한 경우 자동으로 **Secondary**에 요청한다.
+  - **실패 조건**은 다음과 같다.
+    - 실패를 나타내는 **HTTP 코드**(500 등)가 반환된 경우
+    - Primary와 **통신**을 할 수 없는 경우(타임아웃 등): 기본 **10초**(3번 시도)이며 조절 가능하다.
+    - 요청의 **응답**이 늦어지는 경우: 기본 **30초**에서 최대 **60초**까지 조절 가능하다.
+- **GET**, **HEAD**, **OPTION** 메서드에만 적용된다.
+- Primary, Secondary 모두 실패한 경우 **커스텀 에러 페이지** 생성이 가능하다.
+
+### 3.4. Origin Custom Header
+
+- CloudFront에서 Origin에 요청 시 **커스텀 헤더**를 추가하여 전달 가능하다.
+- 이미 요청에 해당 헤더가 포함되어 있으면 **덮어씌운다(Override)**.
+- 최대 **10개**까지 설정 가능하며 증가 요청이 가능하다.
+- 별도로 **추가 불가능한 헤더**가 존재한다([AWS 공식 문서 참조](https://docs.aws.amazon.com/ko_kr/AmazonCloudFront/latest/DeveloperGuide/add-origin-custom-headers.html)).
