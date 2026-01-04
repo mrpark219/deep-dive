@@ -103,3 +103,77 @@
 - 이미 요청에 해당 헤더가 포함되어 있으면 **덮어씌운다(Override)**.
 - 최대 **10개**까지 설정 가능하며 증가 요청이 가능하다.
 - 별도로 **추가 불가능한 헤더**가 존재한다([AWS 공식 문서 참조](https://docs.aws.amazon.com/ko_kr/AmazonCloudFront/latest/DeveloperGuide/add-origin-custom-headers.html)).
+
+## 4. Caching
+
+### 4.1. Caching 티어
+
+- CloudFront의 캐싱은 **2티어** 구조이다.
+- **요청 순서**: **Edge Location** -> **Regional Edge Cache** -> **Origin** 순이다.
+
+### 4.2. Cache Key
+
+- 요청에 따라 어떤 캐시 내용을 보여줄지를 결정하는 **정보의 조합**이다.
+  - 각 오브젝트는 고유의 **Cache Key** 단위로 캐시된다.
+- **Cache Hit**: 뷰어가 특정 Cache Key로 오브젝트를 요청하였을 때, Edge Location에서 해당 캐시 오브젝트를 가지고 있어 **원본 요청 과정 없이** 제공할 수 있는 상황이다.
+  - Origin의 **부하**를 경감할 수 있다.
+  - 더 **빠르게** 콘텐츠를 제공할 수 있다.
+  - 즉 CDN이 **Cache Hit**이 많을수록 더 좋은 **퍼포먼스**를 제공한다.
+- **주요 Cache Key 구성 요소**: **경로(Path)**(기본), **Query String**, **HTTP Header**, **Cookie** 등이 있다.
+
+#### HTTP Header based Cache
+
+- Cache Key 중 **HTTP Header**를 활용하는 방식이다.
+- 활용 사례
+  - **언어별** 캐싱
+  - **Device Type별** 캐싱
+    - CloudFront에서 별도로 **User-Agent** 기반으로 전용 헤더를 생성한다.
+    - `CloudFront-Is-Desktop-Viewer`, `CloudFront-Is-Mobile-Viewer`, `CloudFront-Is-SmartTV-Viewer` 등
+  - **지역별** 캐싱
+    - CloudFront에서 전용 헤더 `CloudFront-Viewer-Country`를 생성한다.
+- 헤더명은 대소문자를 구분하지 않지만 **값**은 구분한다.
+
+#### Cookie Based Cache
+
+- **Cookie**를 기반으로 콘텐츠 내용을 캐시한다.
+  - Cookie를 활용하지 않는 HTTP 서버 혹은 S3에서 사용할 경우 **퍼포먼스만 저하**될 수 있다(Cache Hit율 하락).
+
+### 4.3. Cache 만료
+
+- 캐시된 Object는 일정 기간(**Time To Live: TTL**) 이후 만료된다.
+  - 만료 후 요청이 올 경우 CloudFront는 Origin에 Object **갱신 여부**를 확인한다.
+  - Origin이 **304 Not Modified**를 줄 경우 갱신이 필요 없다(캐시 유지).
+  - **200 OK**와 파일을 줄 경우 갱신한다.
+
+#### Cache TTL
+
+- Cache Object를 얼마나 오래 보관할지에 관한 **설정**이다.
+  - 기본 **24시간**이다.
+  - 모든 CloudFront의 Object에 적용된다.
+  - 파일 단위에서는 Origin에서 `Cache-Control` 헤더 혹은 `Expires` 헤더를 포함해서 **조절** 가능하다.
+- **TTL의 종류**는 다음과 같다.
+  - **Minimum TTL**: 파일 단위 컨트롤에서 줄 수 있는 **최소** TTL이다.
+  - **Maximum TTL**: 파일 단위 컨트롤에서 줄 수 있는 **최대** TTL이다.
+  - **Default TTL**: 별도의 설정이 없을 경우 부여되는 **기본** TTL이다.
+
+#### Cache TTL 컨트롤
+
+- 파일 단위에서는 Origin에서 `Cache-Control` 헤더 혹은 `Expires` 헤더를 포함해서 **조절** 가능하다.
+- **Cache-Control**: 얼마나 오래 Object를 캐시하는지 기간을 설정한다.
+  - **max-age**: CloudFront와 **브라우저** 둘 다 영향을 받는다.
+  - **s-maxage**: **CloudFront**만 영향을 받는다.
+  - **no-cache**, **no-store**: 캐싱하지 않는다(단 Minimum TTL이 0 이상일 경우 Min TTL로 최저 설정된다).
+- **Expires**: Cache가 만료되는 **정확한 시각**을 설정한다.
+  - CloudFront와 브라우저 모두 영향을 받는다.
+- CloudFront의 **Min/Max TTL 범위** 안에서만 설정 가능하다.
+
+### 4.4. Cache Policy
+
+- 캐싱과 관련된 내용을 **정책**으로 정의하여 CloudFront에 적용 가능하다.
+- 주요 설정
+  - 어떤 **키**(HTTP Header, 쿠키, Query String 등)로 콘텐츠를 캐시하는지 설정한다.
+  - 얼마나 오래 캐시하는지(**TTL**) 설정한다.
+  - 콘텐츠 **압축 저장** 관련 설정을 한다.
+- **두 가지 종류**가 있다.
+  - **Managed**: AWS에서 직접 생성한 Policy로 다양한 상황을 위해 **미리 준비된** Policy이다.
+  - **Custom**: 사용자가 **직접 설정**하는 Policy이다.
