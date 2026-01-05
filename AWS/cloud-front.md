@@ -177,3 +177,46 @@
 - **두 가지 종류**가 있다.
   - **Managed**: AWS에서 직접 생성한 Policy로 다양한 상황을 위해 **미리 준비된** Policy이다.
   - **Custom**: 사용자가 **직접 설정**하는 Policy이다.
+
+## 5. Behavior
+
+- CloudFront의 요청이 어떻게 처리되는지 정의하는 다양한 **설정의 모음**이다.
+- **경로 패턴(Path Pattern)** 단위로 Behavior를 구성한다.
+  - 예: `files/*`, `files/*.png`, `*.png`
+  - 경로 패턴 목록 중 **처음**으로 매칭된 패턴의 동작을 적용한다(우선순위 적용).
+  - 신규 생성 시 `*`(Default)로 고정된다.
+- 주요 구성 내용
+  - **Origin**
+  - **뷰어 설정(Viewer Settings)**
+  - **Cache Policy**, **Response Headers Policy**, **Lambda@Edge** 연결
+
+### 5.1. Viewer 설정
+
+- **Viewer Protocol Policy**
+  - CloudFront에 접근하는 **프로토콜**을 설정한다.
+  - **HTTP and HTTPS**: 둘 다 허용한다.
+  - **Redirect HTTP to HTTPS**: HTTP 요청을 HTTPS로 리다이렉트한다.
+  - **HTTPS Only**: HTTPS 요청만 허용한다.
+- **Allowed HTTP Methods**
+  - **GET**, **HEAD**, **OPTIONS**, **PUT**, **POST**, **PATCH**, **DELETE**를 지원한다.
+- **뷰어 액세스 제한(Restrict Viewer Access)**
+  - **Signed URL(Presigned URL)** 또는 **Signed Cookie**로만 접근 가능하도록 할지 여부를 결정한다.
+
+### 5.2. Policy 설정
+
+- **Cache Policy**
+  - 어떤 **키**(HTTP Header, 쿠키, Query String 등)로 콘텐츠를 **캐시하는지** 결정한다.
+  - 얼마나 오래 캐시하는지(**TTL**) 설정한다.
+  - 콘텐츠 **압축 저장(Gzip, Brotli)** 관련 설정을 포함한다.
+- **Origin Request Policy**
+  - Origin에 콘텐츠를 요청할 때 어떤 내용을 **전달**할 것인지(HTTP Header, Query String, Cookie) 설정한다.
+  - **Cache Key**로 사용할지 여부와 **독립적**으로 설정 가능하다(즉, 캐시 키에는 포함하지 않으면서 Origin에는 데이터 전달 가능).
+- **Response Headers Policy**
+  - 클라이언트로 응답하는 과정에서 어떤 **HTTP Header**를 **제거**하거나 **추가**할지 설정한다.
+  - 커스텀 헤더는 최대 **10개**까지 설정 가능하다.
+  - **Authorization Header**는 별도로 처리가 불가능하다.
+
+### 5.3. 기타 설정
+
+- **Field Level Encryption**: CloudFront에서 Origin으로 데이터를 전송할 때 특정 필드를 **암호화**하여 콘텐츠를 보호하는 방법이다.
+- **Lambda@Edge** 및 **CloudFront Functions** 연결이 가능하다.
