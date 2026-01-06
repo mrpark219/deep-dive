@@ -243,3 +243,47 @@
   - 예: 100개씩 30번 요청하거나 1,000개씩 3번 요청 가능하다.
 - 한 달에 **1,000개**의 경로 Invalidation은 **무료**이다(계정 전체 **Distribution** 통합).
   - 무료 횟수 초과 시 경로당 **$0.005**가 부과된다.
+
+## 7. Amazon CloudFront의 콘텐츠 보호
+
+### 7.1. 콘텐츠 접근 제한
+
+- CloudFront에서 콘텐츠에 대한 **접근**을 제한하는 기능이다.
+  - **뷰어 접근 제한**: CloudFront에 접근하는 주체별로 다르게 콘텐츠의 접근 제한이 필요한 경우에 사용한다.
+    - 예: 프리미엄 티어용 영상, 유저 전용 다운로드 이미지 등
+  - **Origin 접근 제한**: CloudFront를 거치지 않고 직접 Origin에 접근하는 것을 막고 싶은 경우에 사용한다.
+
+### 7.2. CloudFront에서 뷰어 접근 제한 (Signed URL/Cookie)
+
+- 다음 **두 가지 방법**을 사용하여 제한한다.
+  - **Signed URL**: 권한 정보가 담긴 **임시 URL**을 발급하여 뷰어에게 전달하고 콘텐츠를 다운로드할 수 있도록 허용한다.
+    - URL당 **하나의 파일**만 사용 가능하다.
+  - **Signed Cookie**: 뷰어가 권한을 행사해 다운로드할 수 있도록 콘텐츠 접근 권한을 가진 **Cookie**를 발급해 뷰어에 전달한다.
+    - **다수의 파일**에 사용 가능하다.
+  - 두 방식 모두 **만료 기간** 설정이 가능하다.
+
+#### Signer
+
+- Signed URL/Cookie를 만들 **권한**을 가진 주체이다.
+- 두 가지 종류
+  - **Trusted Key Group(추천)**: CloudFront에 Public/Private Key Pair 중 **Public Key**를 등록하고, 가지고 있는 **Private Key**로 Presigned URL/Cookie를 생성하는 방식이다.
+  - **AWS Account(비추천)**: **Root 사용자**(IAM 사용자 불가능)로 계정의 CloudFront Key Pair를 다운받아 활용하는 방식이다.
+    - AWS Root 사용자를 활용해야 하며, API를 사용할 수 없고, IAM을 통한 권한 제어가 **불가능**하다.
+- CloudFront URL을 만들 때 **Distribution** 단위로 등록된 **Key Group**을 활용한다.
+  - **Key Group**: Private/Public Key로 이루어진 키 쌍의 집합으로, CloudFront에 업로드하는 하나 이상의 **Public Key**로 구성된다.
+
+#### Presigned 정책 (Policy)
+
+- Presigned URL/Cookie를 만들 때 URL/Cookie의 **권한**을 설정하기 위한 정책이다.
+- **두 가지 종류**가 있다.
+  - **Canned Policy(미리 준비된 정책)**: 간단한 버전으로, **만료 시간**만 설정 가능하다.
+    - URL이 **짧아지는** 장점이 있다.
+  - **Custom Policy**: 모든 제약 사항 설정이 가능하다.
+    - 정책으로 Presigned URL/Cookie의 동작 범위(**만료 시간**, **시작 시간**, **IP 제한** 등) 설정이 가능하다.
+
+| 설명                | Canned Policy | Custom Policy  |
+| :------------------ | :-----------: | :------------: |
+| 정책 재사용         |      No       |      Yes       |
+| 사용 가능 시점 적용 |      No       | Yes (Optional) |
+| 만료 시점 적용      |      Yes      |      Yes       |
+| IP Range 제한       |      No       | Yes (Optional) |
