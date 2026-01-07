@@ -69,16 +69,6 @@
   - **POST/PUT** 등을 통해 직접 S3에 콘텐츠 업데이트가 가능하다.
   - **S3 Object Lambda** 등을 활용할 수 있다.
 
-#### S3 Origin Access (OAI vs OAC)
-
-- CloudFront를 통해서만 S3에 접근하도록 제한하여, 유저가 S3 URL로 직접 접속하는 것을 **차단**하는 기능이다.
-- **OAI(Origin Access Identity)**
-  - CloudFront만 S3의 파일에 접근할 수 있도록 설정하는 **기존(Legacy)** 안전장치이다.
-  - CloudFront 배포에 특별한 **자격 증명**을 생성하고 이를 S3 버킷 정책에 허용하는 방식이다.
-- **OAC(Origin Access Control)**
-  - **최신 권장** 방식이며, **IAM**을 사용하여 더 세부적이고 유연한 보안 설정이 가능하다.
-  - OAI의 모든 기능을 포함한다.
-
 ### 3.2. Custom Origin
 
 - **S3 버킷**을 제외한 모든 Origin을 의미한다.
@@ -287,3 +277,53 @@
 | 사용 가능 시점 적용 |      No       | Yes (Optional) |
 | 만료 시점 적용      |      Yes      |      Yes       |
 | IP Range 제한       |      No       | Yes (Optional) |
+
+### 7.2. Origin 접근 제한
+
+#### OAC, OAI
+
+- CloudFront를 통해서만 S3에 접근하도록 제한하여, 유저가 S3 URL로 직접 접속하는 것을 **차단**하는 기능이다.
+- **OAI(Origin Access Identity)**
+  - CloudFront만 S3의 파일에 접근할 수 있도록 설정하는 **기존(Legacy)** 안전장치이다.
+  - CloudFront 배포에 특별한 **자격 증명**을 생성하고 이를 S3 버킷 정책에 허용하는 방식이다.
+- **OAC(Origin Access Control)**
+  - **최신 권장** 방식이며, **IAM**을 사용하여 더 세부적이고 유연한 보안 설정이 가능하다.
+  - OAI의 모든 기능을 포함한다.
+  - S3에서 해당 OAC의 접근을 허용하고, CloudFront에서 OAC를 활용해서 S3와 소통한다.
+  - S3에서 기본적으로 모든 접근을 차단하고 OAC의 접근만 허용한다.
+  - **Lambda Function URL**에도 사용 가능하다.
+
+#### Origin Access Control의 Sign 방법
+
+- CloudFront가 S3와 소통하기 위한 요청에 **Sign 방법**을 정의한다.
+- 세 가지 종류
+  - **Sign requests (recommended)**: CloudFront IAM Principal이 S3에 요청할 때 **SigV4**로 Sign한다.
+    - 요청에 자격 증명을 활용해 필요한 정보로 **Authorization Header**를 구성하고, S3에서 해당 내용을 검증해서 자격이 있는 요청인지 확인 후 처리하거나 거부한다.
+    - 클라이언트가 **Sign**한 헤더가 있다면 **덮어씌운다(Override)**.
+  - **Do not override authorization header**: 클라이언트 Header가 있다면 사용하고, 없으면 새로 **Sign**한다.
+  - **Do not sign requests**: **Authorization Header**를 사용하지 않는다.
+    - 클라이언트가 항상 Sign을 통해 요청하거나, 콘텐츠가 **퍼블릭**인 경우 사용한다.
+
+#### Custom Origin 보호
+
+- **Custom Header**를 활용한다.
+  - CloudFront에서 **Header**를 생성하고, Origin에서 해당 Header가 없으면 **거부**한다.
+- Origin에서 **CloudFront IP**를 제외한 모든 트래픽을 **차단**한다.
+
+#### 지리적 배포 제한 (Geographic Restrictions)
+
+- **CloudFront 지리 배포 제한**
+  - **Allow list** 혹은 **Block list**로 **국가 기준** 설정을 한다.
+  - 모든 배포(**Distribution**)에 제한 사항이 포함된다.
+    - 즉 일부만 제한을 거는 것은 **불가능**하다.
+  - IP 주소의 정확도는 99.8%이다.
+- **3rd Party 지리적 위치 서비스** 사용
+  - **커스터마이징**이 가능하다(브라우저별, 쿠키별 등).
+  - **Signed URL** 기반으로 동작한다.
+
+#### Field-Level Encryption
+
+- CloudFront를 활용해서 실제 데이터를 처리하는 주체까지 데이터를 **암호화**해서 전달할 수 있는 방법이다.
+  - HTTPS 통신과는 별도의 개념이다.
+- Edge Location에서 받은 데이터 중 특정 데이터를 주어진 **Public Key**로 암호화한다.
+- 이후 데이터를 처리하는 측에서 **Private Key**로 **복호화**하여 사용한다.
