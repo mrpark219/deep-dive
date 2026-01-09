@@ -327,3 +327,42 @@
   - HTTPS 통신과는 별도의 개념이다.
 - Edge Location에서 받은 데이터 중 특정 데이터를 주어진 **Public Key**로 암호화한다.
 - 이후 데이터를 처리하는 측에서 **Private Key**로 **복호화**하여 사용한다.
+
+## 8. Amazon CloudFront 모니터링
+
+### 8.1. CloudWatch 지표
+
+- CloudWatch를 통해서 다양한 **지표(Metric)** 를 제공한다.
+  - **기본 지표**와 추가 비용으로 활성화 가능한 **추가 지표**로 나뉜다.
+    - **기본 지표**: 요청 수, **BytesDownloaded**, **BytesUploaded**, **4xx**, **5xx**, **TotalErrorRate** 등이 있다.
+    - **추가 지표**: **CacheHitRate**, **OriginLatency**, **ErrorRate** by Status Code(401, 403, 404, 502, 503, 504) 등이 있다.
+  - 추가 지표 비용은 고정이며 활성화된 지표별로 한 달에 한 번 **배포(Distribution)** 당 발생한다.
+- **버지니아 리전(us-east-1)** 에서 확인 가능하다.
+
+### 8.2. Access Log
+
+- **Access Log(Standard Log)**: S3 버킷을 지정해서 모든 유저의 요청을 **로깅**한다.
+  - 실시간이 아니며 **지연 시간**이 발생한다.
+- **Real-Time Log**: 약 **초 단위**의 지연 시간으로 요청을 **실시간**으로 로깅한다.
+
+#### Access Log (Standard)
+
+- S3 버킷을 지정해서 모든 유저의 요청을 **로깅**한다.
+- **Distribution** 단위로 요청받은 Edge Location에서 지속적으로 로그 파일을 만들어 **S3 버킷**으로 **Flush**한다.
+- 시간 단위로 여러 번 **Flush**한다.
+  - 최대 **24시간**까지 지연 가능하며, 심지어 아예 전송되지 않고 **누락**될 수 있다.
+  - 헤더와 쿠키의 크기가 **20KB**를 넘거나 URL이 **8,192Bytes**를 넘어갈 경우 CloudFront에서 요청을 별도로 **파싱(Parse)** 하지 않고 처리한다.
+    - 이 경우 **로깅**이 되지 않는다.
+
+#### Real-Time Log
+
+- CloudFront의 요청 로그를 **실시간**으로 처리할 수 있는 기능이다.
+  - **Kinesis Data Stream**으로 처리한다.
+  - 추후 **Firehose** 등으로 S3에 로그로 저장하거나, **Redshift**, **OpenSearch** 등으로 분석 가능하다.
+- **추가 비용**이 발생한다.
+- 로그의 **지연 시간**이 발생하거나 **누락**될 수 있다.
+- 설정 값
+  - **Sampling Rate**: 요청 중 얼마만큼을 받아볼 것인지에 대한 설정이다(1~100%).
+  - **Fields**: 로그 내용 중 실시간으로 받아볼 **필드**(Timestamp, Client IP, TimeToFirstByte, StatusCode, Host, EdgeLocation, TimeTaken 등)를 선택한다.
+  - **Cache 동작**: 실시간 로그를 받아볼 **패턴** 단위의 동작(**Behavior**)을 지정한다.
+- **Kinesis Stream** 권한 설정에 **IAM 역할**이 필요하다.
