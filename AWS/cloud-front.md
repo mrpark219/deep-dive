@@ -366,3 +366,39 @@
   - **Fields**: 로그 내용 중 실시간으로 받아볼 **필드**(Timestamp, Client IP, TimeToFirstByte, StatusCode, Host, EdgeLocation, TimeTaken 등)를 선택한다.
   - **Cache 동작**: 실시간 로그를 받아볼 **패턴** 단위의 동작(**Behavior**)을 지정한다.
 - **Kinesis Stream** 권한 설정에 **IAM 역할**이 필요하다.
+
+## 9. Staging Distribution
+
+- CloudFront 운영 배포(Production)를 업데이트하기 전에 **Staging Distribution**을 만들어 **테스트** 및 **카나리 배포**를 적용할 수 있는 기능이다.
+- 워크플로우
+  - 기존 **Primary Distribution**에서 파생된 **Staging Distribution**을 생성한다.
+  - **Staging Distribution**으로 **Header** 또는 **Weight(가중치)** 기반으로 트래픽을 **라우팅**한다.
+  - 검수가 완료되면 Staging Distribution을 **Primary Distribution**으로 **승격(Promote)** 한다.
+
+## 10. WebSocket
+
+- 별도의 설정 없이 기본적으로 **WebSocket 프로토콜**을 지원한다.
+  - 단, **Origin 서버**의 지원이 필요하다.
+
+## 11. gRPC 지원
+
+- **gRPC**는 Cloud Native Computing Foundation(CNCF)에서 만든 **RPC 기반 오픈소스 API 시스템**이다.
+  - **RPC(Remote Procedure Call)**: 다른 주체의 함수 혹은 기능을 직접 **호출**하는 프로토콜이다.
+  - 단순하게 서버의 데이터를 가져오거나 업데이트하는 **REST**와 다르게, 직접 서버의 **함수**를 호출할 수 있다.
+- 사용 사례
+  - 마이크로 서비스 아키텍처(MSA)의 서비스 간 통신
+  - 실시간 데이터 전송(채팅, IoT 데이터 스트리밍)
+  - 서버-클라이언트 아키텍처에서 양방향 통신이 필요한 경우
+
+## 12. CloudFront VPC Origins
+
+- CloudFront의 Origin으로 **VPC**를 지정할 수 있는 기능이다.
+  - 기존에는 S3 이외에 커스텀 오리진으로 **퍼블릭 인터넷**의 리소스만 지정 가능했다.
+  - **ALB**, **NLB**, **EC2**를 지원한다.
+  - **보안 그룹**으로 트래픽 통제가 가능하며, **CloudFront Managed Prefix**를 활용한다.
+- 제약 사항
+  - **CloudFront**와 **같은 계정**의 VPC만 연동 가능하다.
+  - **지원하는 리전**의 VPC만 사용 가능하다.
+  - VPC에 **Internet Gateway**가 필요하다(단, 라우팅 테이블 연동은 필요 없다).
+  - **Private Subnet**에 적어도 하나의 **IPv4 주소** 가용 공간이 필요하다(ENI 확보용).
+  - WebSocket, gRPC, Origin Rewrite with Lambda@Edge, Response Timeout, Keep-Alive Timeout 설정은 **불가능**하다.
