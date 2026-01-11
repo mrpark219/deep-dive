@@ -39,3 +39,7 @@
 ## 10. CloudFront
 
 [CloudFront](./cloud-front.md)
+
+## 11. CloudFormation
+
+[CloudFormation](./cloud-formation.md)
