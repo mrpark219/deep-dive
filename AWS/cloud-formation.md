@@ -348,3 +348,87 @@ Resources:
       MasterUsername: "{{resolve:secretsmanager:MySecret:SecretString:username}}"
       MasterUserPassword: "{{resolve:secretsmanager:MySecret:SecretString:password}}"
 ```
+
+## 5. CloudFormation Wait Condition
+
+- 리소스의 **프로비저닝** 중 특정 주체가 로직을 수행 후 **성공 신호**를 알릴 때까지 리소스 프로비저닝을 **멈추는(Wait)** 구성이다.
+  - 예: EC2 인스턴스를 프로비저닝할 때 다양한 설정 작업(웹 서버 설치 등)이 끝난 후 **완료 처리**를 한다.
+- **N개**의 성공 신호를 **X초**까지 대기 가능하다(최대 **12시간**).
+  - **실패 신호**를 받으면 실패 처리된다.
+  - 시간 내에 N개의 성공 신호를 받지 못하면 **실패(Timeout)** 처리된다.
+- **두 가지 방법**이 있다.
+  - 별도의 `AWS::CloudFormation::WaitCondition` 리소스를 생성한다.
+    - **다수**의 리소스를 컨트롤할 경우 사용한다.
+  - 리소스의 **CreationPolicy**를 설정한다.
+    - **EC2**, **Auto Scaling Group**의 경우 추천한다.
+
+### 5.1. CloudFormation Helper Scripts
+
+- CloudFormation과의 **소통**을 돕기 위한 **Python** 기반 스크립트이다.
+- **Amazon Linux**에는 기본적으로 설치되어 있다.
+  - 다른 OS에서는 **별도 설치**가 필요하다.
+
+#### cfn-signal
+
+- CloudFormation의 **WaitCondition** 리소스 혹은 **CreationPolicy**가 설정된 리소스에 **처리 완료 신호**를 보내는 스크립트이다.
+
+```shell
+cfn-signal --success|-s signal.to.send \
+        --access-key access.key \
+        --credential-file|-f credential.file \
+        --exit-code|-e exit.code \
+        --http-proxy HTTP.proxy \
+        --https-proxy HTTPS.proxy \
+        --id|-i unique.id \
+        --region AWS.region \
+        --resource resource.logical.ID \
+        --role IAM.role.name \
+        --secret-key secret.key \
+        --stack stack.name.or.stack.ID \
+        --url CloudFormation.endpoint
+```
+
+#### cfn-init
+
+- 리소스 **메타데이터**(`AWS::CloudFormation::Init`)를 기반으로 **패키지 설치**, **파일 생성** 등을 담당하는 스크립트이다.
+
+```shell
+cfn-init --stack|-s stack.name.or.id \
+         --resource|-r logical.resource.id \
+         --region region \
+         --access-key access.key \
+         --secret-key secret.key \
+         --role rolename \
+         --credential-file|-f credential.file \
+         --configsets|-c config.sets \
+         --url|-u service.url \
+         --http-proxy HTTP.proxy \
+         --https-proxy HTTPS.proxy \
+         --verbose|-v
+```
+
+#### cfn-get-metadata
+
+- 특정 경로의 **메타데이터**를 확보(조회)하는 스크립트이다.
+
+```shell
+cfn-get-metadata --access-key access.key \
+                 --secret-key secret.key \
+                 --credential-file|f credential.file \
+                 --key|k key \
+                 --stack|-s stack.name.or.id \
+                 --resource|-r logical.resource.id \
+                 --role IAM.role.name \
+                 --url|-u service.url \
+                 --region region
+```
+
+#### cfn-hup
+
+- **업데이트**를 체크하여 변경이 일어나면 **커스텀 로직**을 수행하는 데몬 스크립트이다.
+
+```shell
+cfn-hup --config|-c config.dir \
+        --no-daemon \
+        --verbose|-v
+```
