@@ -293,3 +293,58 @@ Properties:
   - **Fn::GetAZs**: 가용 영역(AZ) 목록을 반환한다.
   - **Fn::Join**: 구분자를 사용하여 값의 목록을 하나의 문자열로 결합한다.
   - **Fn::Base64**, **Fn::Cidr**, **Fn::Split** 등이 있다.
+
+## 4. CloudFormation 리소스 속성
+
+- 리소스 자체의 **공통적인 속성**을 정의한다.
+  - **CreationPolicy**: 리소스 생성 시 **특정 조건**을 만족해야 완료 처리될 수 있도록 설정한다.
+    - 예: EC2에서 웹 서버가 설치되어야 EC2 생성을 완료로 간주한다.
+  - **DeletionPolicy**: 리소스 **삭제 정책**을 정의한다.
+  - **DependsOn**: 특정 리소스가 생성된 **이후**에 해당 리소스 생성을 시작하도록 설정한다.
+    - 예: 반드시 RDS가 생성된 후에 EC2 생성을 시작해서 원활하게 서버가 설정되도록 구성한다.
+  - **Metadata**: 리소스의 **추가적인 정보**를 제공한다.
+  - **UpdatePolicy**: 리소스를 업데이트할 때의 **절차(프로세스)**를 정의한다.
+    - 예: **Auto Scaling Group**의 경우 업데이트 시 인스턴스 업데이트 방식(Rolling 등)을 정의한다.
+  - **UpdateReplacePolicy**: 리소스가 **교체(삭제 후 재생성)** 될 때, **기존 리소스**를 어떻게 할지 정의한다.
+    - 예: EC2 인스턴스 업데이트 시 기존 EBS 볼륨의 **스냅샷**을 만들 것인지 여부 등을 정의한다.
+
+### 4.1. DeletionPolicy
+
+- **Delete**: 스택 삭제 시 같이 **삭제**된다(몇몇 리소스를 제외하고는 **기본 옵션**이다).
+- **Retain**: 스택 삭제 시 해당 리소스는 삭제하지 않고 **보존**한다.
+  - **주의**: 리소스 생성에 실패하여 **롤백**할 때도 보존된다.
+  - **RetainExceptOnCreate**: 리소스를 **처음 생성**할 때를 제외하고 보존한다. 즉, 처음 생성 시 실패한다면 삭제된다.
+- **Snapshot(지원 시)**: 스냅샷을 지원하는 리소스(EC2, RDS 등)의 경우 삭제 시 **스냅샷**을 생성하고 삭제한다.
+  - 지원 리소스: **RDS**, **EBS**, **Redshift**, **ElastiCache** 등
+
+```yaml
+AWSTemplateFormatVersion: "2010-09-09"
+Resources:
+  MyBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+```
+
+### 4.2. DependsOn
+
+- `!Ref`, `!GetAtt`, `!Sub`로 묶인 경우에는 **암시적**으로 참조하는 리소스를 먼저 생성한 후 해당 리소스를 생성한다.
+- 즉, 해당 참조가 없는 상태에서 리소스의 **생성 순서**를 명시적으로 제어하기 위해 사용한다.
+
+```yaml
+Resources:
+  Ec2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64}}"
+      InstanceType: t2.micro
+    DependsOn: myDB
+  myDB:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      AllocatedStorage: "5"
+      DBInstanceClass: db.t2.small
+      Engine: MySQL
+      EngineVersion: "5.5"
+      MasterUsername: "{{resolve:secretsmanager:MySecret:SecretString:username}}"
+      MasterUserPassword: "{{resolve:secretsmanager:MySecret:SecretString:password}}"
+```
