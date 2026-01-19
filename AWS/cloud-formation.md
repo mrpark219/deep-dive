@@ -540,3 +540,79 @@ cfn-hup --config|-c config.dir \
   - **리전** 및 **계정** 선택
   - **동시** 프로비저닝 스택 숫자 설정(Concurrency)
   - **배포 방식** 설정(순차/병렬, Failure Tolerance 등)
+
+## 9. CloudFormation 추가 파라미터 타입
+
+- 일반적인 파라미터 타입(Integer/String) 이외에 CloudFormation에서 지원하는 **추가 파라미터 타입**이다.
+- **AWS Parameter**: AWS 리소스를 명시하는 파라미터 타입이다.
+  - 예:
+    - `AWS::EC2::InstanceId`
+    - `AWS::EC2::Image::Id`
+    - `List<AWS::EC2::AvailabilityZone::Name>`
+- **Systems Manager Parameter**: AWS의 Systems Manager Parameter Store에서 값을 가져오는 타입이다.
+  - 예: `AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>`
+
+### 9.1. AWS Systems Manager
+
+- AWS에서 인프라를 보고 제어하기 위해 사용할 수 있는 **AWS 서비스**이다.
+- **Systems Manager 콘솔**을 사용하여 여러 AWS 서비스의 운영 데이터를 보고 AWS 리소스에서 **운영 태스크**를 자동화할 수 있다.
+
+#### Parameter Store
+
+- AWS에서 주요 설정과 값들을 **저장/관리/활용**하기 위한 서비스이다.
+  - 예: API 주소, DB 호스트명, AMI ID, API Token, 사용자 ID/패스워드, 환경 변수 등
+- **Public Parameter**: AWS에서 공식적으로 배포하는 파라미터이다.
+  - 각 OS 별로 최신 AMI의 ID
+  - AWS의 모든 리전 목록
+  - AWS의 모든 서비스 목록
+  - 특정 서비스를 사용 가능한 리전 목록
+
+#### Parameter Store 값 참조
+
+- CloudFormation 템플릿 안에서 **SSM Parameter Store**의 값을 참조 가능하다.
+  - `{{resolve:ssm:파라미터 이름}}` 형식을 사용한다.
+- 주요 사용 사례
+  - **퍼블릭 파라미터** 참조(AMI Image ID, Endpoint 등)
+  - **환경 설정 값**의 공유
+    - DB 패스워드, 호스트 등
+  - 기타 주요 값들 설정
+
+```yaml
+Resources:
+  MyInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64}}"
+      InstanceType: t2.micro
+```
+
+### 9.2. 파라미터 순서 및 규칙 정의
+
+- CloudFormation의 파라미터를 입력받을 때 **그룹**, **라벨링**, **순서** 조정이 가능하다.
+- **Metadata Section**을 활용한다.
+
+```yaml
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Network Configuration"
+        Parameters:
+          - VPCID
+          - SubnetId
+          - SecurityGroupID
+      - Label:
+          default: "Amazon EC2 Configuration"
+        Parameters:
+          - InstanceType
+          - KeyName
+    ParameterLabels:
+      VPCID:
+        default: "Which VPC should this be deployed to?"
+```
+
+### 9.3. 다른 스택의 Output 참조
+
+- 다른 스택에서 **Outputs 섹션**으로 내보낸(Export) 값을 참조 가능하다.
+- `!ImportValue` Intrinsic Function(내장 함수)으로 참조한다.
+- 예: `!ImportValue MyExportedName`
