@@ -616,3 +616,29 @@ Metadata:
 - 다른 스택에서 **Outputs 섹션**으로 내보낸(Export) 값을 참조 가능하다.
 - `!ImportValue` Intrinsic Function(내장 함수)으로 참조한다.
 - 예: `!ImportValue MyExportedName`
+
+## 10. CloudFormation 기타
+
+### 10.1. 콘솔에서는 숨겨진 리소스들
+
+- CloudFormation에서 프로비저닝 시 콘솔에서는 보이지 않는 **숨겨진 리소스**가 존재한다.
+  - 주로 하나의 리소스와 다른 리소스를 **연결**해주는 리소스이다.
+  - 예:
+    - **Instance Profile**: IAM 역할과 EC2를 연결한다(`AWS::IAM::InstanceProfile`).
+    - **Volume Attachment**: EBS 볼륨과 EC2를 연결한다(`AWS::EC2::VolumeAttachment`).
+
+### 10.2. CloudFormation 가져오기(Import)
+
+- 기존에 존재하는 리소스를 생성된 CloudFormation **논리적 리소스(스택)**으로 가져오는 기능이다.
+  - 스택 간의 리소스 **이동**도 가능하다.
+- 두 가지 방법
+  - **IaC Generator**: 기존 리소스를 기반으로 자동으로 템플릿을 생성해 주는 서비스이다(종종 권장되지 않음).
+  - **수동 가져오기**: 수동으로 기존 리소스에 해당하는 리소스를 템플릿에 정의하여 가져오는 방법이다.
+
+### 10.3. Drift Detection
+
+- **Drift**: CloudFormation의 **논리적 리소스**(템플릿)와 실제 **물리적 리소스**의 상태가 **다른 경우**를 말한다.
+  - 주로 물리적 리소스를 CloudFormation 이외의 수단(SDK, 콘솔, CLI)으로 **직접 변경**한 경우에 발생한다.
+- CloudFormation에서 스택의 **Drift Detection**을 지원한다.
+  - 즉, 현재 상태를 기반으로 실제 **리소스**를 모니터링하여 변경점을 확인한다.
+  - 해결 방법으로는 템플릿을 수정하여 실제 상태와 맞추거나, 해당 리소스를 **Retain 삭제**(보존 삭제) 후 다시 **가져오기(Import)** 등을 수행해야 한다.
