@@ -47,3 +47,86 @@
   - 대표 정책: `AmazonSSMManagedInstanceCore`
 - **Amazon Linux AMI** 및 AWS 지원 AMI 등에는 **기본 설치**되어 있다.
 - 기타 AWS 서비스 등을 활용해서 SSM Agent의 **자동 업데이트**가 가능하다.
+
+## 2. SSM Parameter Store
+
+- AWS에서 주요 설정과 값들을 **저장/관리/활용**하기 위한 서비스이다.
+  - 예: API 주소, DB 호스트명, AMI ID, API Token, 사용자 ID/패스워드, 환경 변수 등
+- **Key-Value** 기반으로 필요한 값을 저장하고 불러오는 기능을 제공한다.
+- **저장 가능한 값의 형식**은 다음과 같다.
+  - **String**: 일반 텍스트
+  - **StringList**: 콤마(`,`)로 구분된 값의 리스트
+  - **SecureString**: **KMS** 기반으로 암호화된 텍스트
+- **IAM**으로 권한 관리가 가능하다.
+  - **접근 권한**(계층 구조 적용 가능)을 제어한다.
+  - **복호화 권한**(`SecureString`)을 제어한다.
+
+### 2.1. Parameter Store 티어
+
+| 구분                            | Standard                 | Advanced                   |
+| :------------------------------ | :----------------------- | :------------------------- |
+| **최대 파라미터 숫자 (리전당)** | 10,000개                 | 100,000개                  |
+| **최대 파라미터 사이즈**        | 4 KB                     | 8 KB                       |
+| **Parameter 정책**              | No                       | **Yes**                    |
+| **Cost**                        | 무료                     | 유료 (개당 $0.05)          |
+| **기타**                        | Advanced로 변경 **가능** | Standard로 변경 **불가능** |
+
+### 2.2. Parameter Store SecureString
+
+- **KMS**를 활용해서 파라미터를 **암호화**하여 저장한다.
+  - KMS Managed Key를 선택해 암호화한다(기본 `aws/ssm` 키 사용).
+  - 조회 시 `WithDecryption` 옵션을 주어야 **복호화**된 값을 받을 수 있다.
+- **조회 권한**과 **Decrypt 권한**이 분리되어 있다.
+  - 즉, 값을 조회하려면 KMS 복호화 권한도 함께 필요하다.
+
+### 2.3. Parameter Store Versioning
+
+- **Versioning(버전 관리)** 이 가능하다.
+  - 기본 **1**부터 내용 변경 시마다 버전이 계속 증가한다.
+  - 최대 **100개**까지 저장된다.
+    - 100개 이상 생성 시 예전 버전부터 삭제된다(단, Parameter Label이 붙은 버전은 예외).
+- 참조 시 `parameter_name:version` 형식으로 사용 가능하다.
+- 조회 시 **특정 버전**의 파라미터를 조회할 수 있다.
+
+### 2.4. Parameter Store Parameter Labels
+
+- 유저가 각 버전에 부여하는 **텍스트(별칭)** 이다.
+  - 태그처럼 파라미터의 버전에 식별 가능한 **목적/정보** 등을 부여한다(최대 100글자).
+  - 한 버전에 **여러 Label** 부여가 가능하다(최대 10개).
+  - 중복 부여는 **불가능**하다.
+- **Label의 관리**
+  - 파라미터에 Label **추가/삭제**가 가능하다.
+  - 하나의 Label을 다른 버전으로 **이동** 가능하다.
+  - 히스토리 조회가 가능하다.
+- **Label 단위**로 조회가 가능하다.
+
+### 2.5. Parameter Store 계층 구조
+
+- Parameter Store의 Key를 **계층 구조**로 관리 가능하다.
+  - **슬래시(`/`)** 를 기반으로 각 계층을 구분한다.
+  - 첫 글자가 `/`로 시작하지 않을 경우, 계층 구조 없는 파라미터로 생성된다.
+- **계층 구조 단위**로 조회가 가능하다(`GetParametersByPath`).
+- **계층 구조 단위**로 권한 부여가 가능하다.
+
+### 2.6. Parameter Store Parameter Policies
+
+- 파라미터에 지정할 수 있는 **관리 정책**이다.
+  - **Advanced Tier**에서만 사용 가능하다.
+  - **Expiration**: 일정 기간 이후 **삭제(TTL)** 된다.
+  - **ExpirationNotification**: 삭제 전에 **EventBridge** 이벤트를 생성한다.
+  - **NoChangeNotification**: 일정 기간 이상 파라미터 변경이 없을 경우 **EventBridge** 이벤트를 생성한다.
+- 정책의 **삭제/갱신**이 가능하다.
+
+### 2.7. Parameter Store Public Parameters
+
+- AWS에서 **공식적으로 배포**하는 파라미터이다.
+  - 각 OS별 **AMI ID**
+  - AWS의 모든 **리전 목록**
+  - AWS의 모든 **서비스 목록**
+  - 특정 서비스를 사용 가능한 **리전 목록**
+- 별도의 **권한 요구**가 없다.
+
+### 2.8. Parameter Store 주의할 점
+
+- `GetParameter` API 호출 시 최대 **10,000 TPS** 제한이 있다.
+- 따라서 매번 API로 접근해서 값을 가져오기보다는, 애플리케이션 내에서 **캐싱(Caching)**해두고 사용하는 편이 좋다.
