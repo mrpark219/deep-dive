@@ -43,3 +43,7 @@
 ## 11. CloudFormation
 
 [CloudFormation](./cloud-formation.md)
+
+## 12. Systems Manager
+
+[SystemsManager](./systems-manager.md)
