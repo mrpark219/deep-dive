@@ -142,3 +142,30 @@
   - 버전 관리가 가능하다.
 - **태그**, **대상 이름**, **인스턴스 ID** 기반으로 대상을 선정하여 다수의 인스턴스 **클러스터**에 명령 수행이 가능하다.
   - 단, **Eventual Consistency**를 지향하므로 **비동기(Async)**적으로 명령을 처리한다.
+
+## 4. SSM Session Manager
+
+- 인스턴스에 대해 **원클릭 액세스**를 제공하는 관리형 서비스이다.
+  - 인스턴스에 **SSH 연결** 없이, **포트**를 열 필요 없이, **배스천 호스트(Bastion Host)** 를 유지할 필요 없이 로그인 가능하다.
+- **IAM 사용자** 단위로 제어 가능하다(Key 파일로 제어할 필요 없음).
+  - 수백 개의 인스턴스에 대해 일일이 로그인을 위한 **키 파일**을 관리할 필요가 없다.
+- **웹 브라우저** 기반으로 OS와 무관하게 사용 가능하다.
+- **로깅**과 **감사** 기능을 제공한다.
+  - 언제, 어디서, 누가 접속했는지 확인 가능하다(**CloudTrail**).
+  - 접속 기록과 사용한 모든 **커맨드** 및 출력 내역을 **S3** 혹은 **CloudWatch Logs**로 전송 가능하다.
+  - AWS의 서비스와 연동되어 다양한 시나리오 구현이 가능하다.
+    - 예: **EventBridge**와 연동하여 실시간으로 접근에 대한 알림을 받는다.
+
+### 4.1. Session Manager 요구사항
+
+- EC2 **Instance**에 **SSM Agent**가 설치되어 있어야 한다.
+  - Amazon Linux 및 여러 공식 **AMI**에는 기본 설치되어 있다.
+- EC2에 `AmazonSSMManagedInstanceCore` **Managed Policy**가 포함된 **IAM Role**이 적용되어 있어야 한다.
+- SSM Agent가 SSM 및 필요한 서비스에 **접근**할 수 있어야 한다.
+  - **Private Subnet**이라면 **VPC Endpoint**가 해당 VPC에 있어야 한다.
+    - `ssm` (SSM API 요청)
+    - `ssmmessages` (Session Manager 통신)
+    - `ec2messages` (Run Command 등 통신)
+    - `logs` (CloudWatch 로깅 활성화 시)
+    - `s3` (S3 로깅 활성화 시)
+  - **Security Group**에서 **Outbound 443** 포트가 열려 있어야 한다(Inbound 포트 오픈은 필요 없다).
