@@ -11,3 +11,7 @@
 ## 3. 패러다임 개요
 
 [패러다임 개요](./paradigm-overview.md)
+
+## 4. 구조적 프로그래밍
+
+[구조적 프로그래밍](./structured-programming.md)
