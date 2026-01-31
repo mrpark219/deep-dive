@@ -19,3 +19,7 @@
 ## 5. 객체 지향 프로그래밍
 
 [객체 지향 프로그래밍](./object-oriented-programming.md)
+
+## 6. 함수형 프로그래밍
+
+[함수형 프로그래밍](./functional-programming.md)
