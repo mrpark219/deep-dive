@@ -56,3 +56,7 @@
 ## 12. 컴포넌트
 
 [컴포넌트](./component.md)
+
+## 13. 컴포넌트 응집도
+
+[컴포넌트 응집도](./component-cohesion.md)
