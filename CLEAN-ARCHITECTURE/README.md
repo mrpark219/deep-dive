@@ -60,3 +60,7 @@
 ## 13. 컴포넌트 응집도
 
 [컴포넌트 응집도](./component-cohesion.md)
+
+## 14. 컴포넌트 결합
+
+[컴포넌트 결합](./component-coupling.md)
