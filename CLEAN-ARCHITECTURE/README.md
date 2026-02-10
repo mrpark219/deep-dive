@@ -64,3 +64,7 @@
 ## 14. 컴포넌트 결합
 
 [컴포넌트 결합](./component-coupling.md)
+
+## 15. 아키텍처란?
+
+[아키텍처란?](./architecture.md)
