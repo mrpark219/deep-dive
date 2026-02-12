@@ -68,3 +68,7 @@
 ## 15. 아키텍처란?
 
 [아키텍처란?](./architecture.md)
+
+## 16. 독립성
+
+[독립성](./independence.md)
