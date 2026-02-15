@@ -76,3 +76,7 @@
 ## 17. 경계: 선 긋기
 
 [경계: 선 긋기](./boundaries.md)
+
+## 18. 경계 해부학
+
+[경계 해부학](./boundary-anatomy.md)
