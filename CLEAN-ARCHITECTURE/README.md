@@ -92,3 +92,7 @@
 ## 21. 소리치는 아키텍처
 
 [소리치는 아키텍처](./screaming-architecture.md)
+
+## 22. 클린 아키텍처
+
+[클린 아키텍처](./the-clean-architecture.md)
