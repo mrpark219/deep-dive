@@ -88,3 +88,7 @@
 ## 20. 업무 규칙
 
 [업무 규칙](./business-rules.md)
+
+## 21. 소리치는 아키텍처
+
+[소리치는 아키텍처](./screaming-architecture.md)
