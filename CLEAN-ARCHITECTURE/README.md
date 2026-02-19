@@ -96,3 +96,7 @@
 ## 22. 클린 아키텍처
 
 [클린 아키텍처](./the-clean-architecture.md)
+
+## 23. 프레전터와 험블 객체
+
+[프레전터와 험블 객체](./presenters-and-humble-objects.md)
