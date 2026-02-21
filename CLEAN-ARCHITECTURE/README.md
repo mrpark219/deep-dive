@@ -100,3 +100,7 @@
 ## 23. 프레전터와 험블 객체
 
 [프레전터와 험블 객체](./presenters-and-humble-objects.md)
+
+## 24. 부분적 경계
+
+[부분적 경계](./partial-boundaries.md)
