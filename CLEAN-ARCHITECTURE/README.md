@@ -104,3 +104,7 @@
 ## 24. 부분적 경계
 
 [부분적 경계](./partial-boundaries.md)
+
+## 25. 계층과 경계
+
+[계층과 경계](./layers-and-boundaries.md)
