@@ -112,3 +112,7 @@
 ## 26. 메인(Main) 컴포넌트
 
 [메인(Main) 컴포넌트](./the-main-component.md)
+
+## 27. 크고 작은 모든 서비스들
+
+[ 크고 작은 모든 서비스들](./services-great-and-small.md)
