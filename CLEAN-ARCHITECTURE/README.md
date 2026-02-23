@@ -108,3 +108,7 @@
 ## 25. 계층과 경계
 
 [계층과 경계](./layers-and-boundaries.md)
+
+## 26. 메인(Main) 컴포넌트
+
+[메인(Main) 컴포넌트](./the-main-component.md)
