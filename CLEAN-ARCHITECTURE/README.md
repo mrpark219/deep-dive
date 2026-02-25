@@ -120,3 +120,7 @@
 ## 28. 테스트 경계
 
 [테스트 경계](./the-test-boundary.md)
+
+## 29. 클린 임베디드 아키텍처
+
+[클린 임베디드 아키텍처](./clean-embedded-architecture.md)
