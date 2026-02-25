@@ -116,3 +116,7 @@
 ## 27. 크고 작은 모든 서비스들
 
 [ 크고 작은 모든 서비스들](./services-great-and-small.md)
+
+## 28. 테스트 경계
+
+[테스트 경계](./the-test-boundary.md)
