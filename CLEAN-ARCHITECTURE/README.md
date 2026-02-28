@@ -124,3 +124,7 @@
 ## 29. 클린 임베디드 아키텍처
 
 [클린 임베디드 아키텍처](./clean-embedded-architecture.md)
+
+## 30. 데이터베이스는 세부사항이다
+
+[데이터베이스는 세부사항이다](./the-database-is-a-detail.md)
