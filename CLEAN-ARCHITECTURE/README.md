@@ -136,3 +136,7 @@
 ## 32. 프레임워크는 세부사항이다
 
 [프레임워크는 세부사항이다](./frameworks-are-details.md)
+
+## 33. 빠져 있는 장
+
+[빠져 있는 장](./the-missing-chapter.md)
