@@ -17,6 +17,7 @@
 | [토비의 클린 스프링 - 도메인 모델 패턴과 헥사고날 아키텍처 Part 1](./CLEAN-SPRING-HEXAGONAL-PART1/README.md) | `2025-07-29` ~ `2025-08-29` |
 | [김영한의 실전 자바 - 고급 1편, 멀티스레드와 동시성](./MULTITHREADING-AND-CONCURRENCY/README.md)             | `2025-08-30` ~ `2025-11-04` |
 | [AWS(Amazon Web Services)](./AWS/README.md)                                                                  | `2025-11-05` ~ `2026-01-25` |
-| [Clean Architecture](./CLEAN-ARCHITECTURE/README.md)                                                         | `2026-01-26` ~ `Present`    |
+| [Clean Architecture](./CLEAN-ARCHITECTURE/README.md)                                                         | `2026-01-26` ~ `2026-03-06` |
+| [김영한의 실전 자바 - 고급 2편, I/O, 네트워크, 리플렉션](./IO-NETWORK-REFLECTION/README.md)                  | `2026-03-07` ~ `Present`    |
 
 추후 새로운 주제를 추가하면서 업데이트할 예정입니다. 🚀
