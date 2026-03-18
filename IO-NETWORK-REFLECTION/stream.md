@@ -185,6 +185,7 @@ fis.close();
 ### 4.2. Buffered 스트림 활용
 
 ```java
+// 1. BufferedOutputStream 활용 (쓰기)
 FileOutputStream fos = new FileOutputStream(FILE_NAME);
 BufferedOutputStream bos = new BufferedOutputStream(fos, BUFFERED_SIZE);
 
@@ -192,49 +193,96 @@ for (int i = 0; i < FILE_SIZE; i++) {
     bos.write(1);
 }
 bos.close();
+
+// 2. BufferedInputStream 활용 (읽기)
+FileInputStream fis = new FileInputStream(FILE_NAME);
+BufferedInputStream bis = new BufferedInputStream(fis, BUFFERED_SIZE);
+
+int fileSize = 0;
+int data;
+while ((data = bis.read()) != -1) {
+    fileSize++;
+}
+bis.close();
 ```
 
-- `BufferedOutputStream`은 내부적으로 데이터를 모아두는 **버퍼 기능**만 제공한다.
-- 따라서 데이터를 실제로 전송할 대상인 **`OutputStream`이 반드시 필요하다**.
-- 위 코드에서는 `FileOutputStream` 객체를 생성자에 전달한다.
-- 객체를 생성할 때 추가로 사용할 버퍼의 크기도 함께 지정할 수 있다.
-- 개발자가 버퍼용 `byte[]` 배열을 직접 다루지 않아도 되므로 예제처럼 코드를 단순하게 작성할 수 있다.
+- `BufferedOutputStream`과 `BufferedInputStream`은 내부적으로 데이터를 모아두는 **버퍼 기능**만 제공한다.
+- 단독으로 사용할 수 없으므로 데이터를 실제로 입출력할 **대상 기본 스트림**(`FileOutputStream`, `FileInputStream` 등)이 반드시 필요하다.
+- 객체를 생성할 때 대상 스트림과 함께 사용할 **버퍼의 크기**를 지정할 수 있다.
+- 버퍼용 배열(`byte[]`)을 직접 다루지 않아도 되므로 코드를 **단순하게 작성**할 수 있다.
+- `BufferedInputStream`은 `InputStream`을 상속받으므로 기존의 `read()` 메서드 등을 **그대로 사용**할 수 있다.
 
-#### BufferedOutputStream 실행 순서
+#### Buffered 스트림 실행 순서 - 쓰기
 
-1. **내부 버퍼 준비**
-   - `BufferedOutputStream`은 내부에 `byte[] buf`라는 버퍼를 가지고 있다.
-   - 버퍼의 크기가 3이라고 가정한다.
-2. **버퍼에 데이터 보관**
-   - `write(byte)` 메서드로 1바이트를 전달하면 이 데이터는 내부 버퍼 배열에 보관된다.
-   - 메서드를 2번 호출하더라도 아직 버퍼가 가득 차지 않았으므로 디스크에 쓰지 않고 대기한다.
-3. **버퍼 가득 참 및 대상 스트림 호출**
-   - 3번째 호출이 일어날 때 비로소 버퍼가 가득 찬다.
-   - 버퍼가 꽉 차면 객체 생성 시 전달받았던 `FileOutputStream`의 `write(byte[])` 메서드를 호출한다.
-4. **시스템 콜 및 버퍼 비우기**
-   - `FileOutputStream`이 버퍼에 쌓인 모든 데이터를 **시스템 콜**을 통해 운영체제(OS)로 한 번에 전달한다.
-   - 전송이 끝난 후에는 다음 데이터를 담을 수 있도록 버퍼를 비운다.
-5. **과정 반복**
-   - 이후 `write(byte)`가 다시 호출되면 버퍼를 채우고 비우는 과정을 반복한다.
+1. **내부 버퍼에 데이터 보관**
+   - `write()` 메서드를 호출하면 데이터가 바로 디스크로 가지 않고 내부 버퍼 배열(`byte[] buf`)에 차곡차곡 보관된다.
+2. **버퍼 가득 참 및 시스템 콜 발생**
+   - 버퍼가 꽉 차면 대상 스트림의 `write(byte[])` 메서드를 **호출한다**.
+   - 이때 **시스템 콜**을 통해 버퍼에 쌓인 모든 데이터를 한 번에 전달하고 버퍼를 **비운다**.
+3. **잔류 데이터 처리 (Flush)**
+   - 버퍼가 다 차지 않았더라도 `flush()`를 호출하면 현재 버퍼에 있는 데이터를 즉시 목적지로 **전송한다**.
 
-#### BufferedOutputStream 비우기
+#### Buffered 스트림 실행 순서 - 읽기
 
-- 버퍼가 완전히 차지 않았을 때 남은 데이터를 강제로 전송하려면 **`flush()`** 메서드를 호출하면 된다.
+1. **내부 버퍼 확인 및 데이터 로드**
+   - `read()` 메서드를 호출할 때 버퍼가 비어있다면 대상 스트림의 `read(byte[])`를 **호출한다**.
+   - 디스크나 외부 소스에서 버퍼 크기만큼의 데이터를 한 번에 읽어와 버퍼를 **채운다**.
+2. **버퍼에서 데이터 반환**
+   - 이후 `read()`를 호출하면 디스크에 직접 접근하지 **않는다**.
+   - 메모리 내 버퍼에 이미 보관된 데이터를 하나씩 꺼내어 매우 빠르게 **반환한다**.
+3. **반복 및 재충전**
+   - 버퍼의 데이터를 모두 소진하면 다시 1번 과정으로 돌아가 다음 뭉치 데이터를 버퍼에 새로 **채운다**.
 
-#### 버퍼에 데이터가 남아있는 상태에서 close()를 호출할 때
+#### 자원 정리 (close)
 
-- `BufferedOutputStream`의 `close()` 메서드를 호출하면 내부적으로 `flush()`가 먼저 실행되어 남은 데이터를 목적지로 모두 전송한다.
-- 따라서 스트림을 닫기만 해도 자투리 데이터를 파일에 **안전하게 저장**할 수 있다.
-- 버퍼를 완전히 비운 후에야 비로소 `BufferedOutputStream`의 자원을 정리한다.
-- 그다음 연결되어 있던 대상 스트림(`FileOutputStream`)의 `close()`를 호출하여 해당 자원까지 함께 **연쇄적으로 정리**한다.
-- 핵심은 가장 마지막에 감싸서 연결한 **보조 스트림** 하나만 닫아주면 내부 스트림들이 모두 안전하게 닫힌다는 점이다.
-- 반대로 `BufferedOutputStream`을 닫지 않고 내부의 `FileOutputStream`만 직접 닫으면 문제가 발생한다.
-- 보조 스트림의 `flush()`가 호출되지 않아 버퍼에 남은 데이터가 파일에 저장되지 않고 증발하는 **심각한 버그**가 생긴다.
-- 따라서 스트림을 여러 개 연결해서 사용할 때는 항상 **가장 마지막에 연결한 스트림**을 반드시 닫아주어야 한다.
+- 입출력 작업이 끝나면 메모리 누수 방지와 외부 자원 해제를 위해 반드시 `close()`를 **호출해야 한다**.
+- 스트림을 여러 개 연결해서 사용할 때는 항상 가장 마지막에 감싼 **보조 스트림**만 닫아주면, 연결된 기본 스트림의 `close()`까지 연쇄적으로 **호출되어 정리된다**.
+- 특히 쓰기 작업(`BufferedOutputStream`)에서는 자원을 닫기 전에 내부적으로 `flush()`가 먼저 실행되어 버퍼에 남은 자투리 데이터를 목적지에 **안전하게 저장한다**.
+- 만약 보조 스트림을 닫지 않고 대상 스트림만 직접 닫으면, 쓰기 작업 시 버퍼 내부에 있던 데이터가 디스크에 쓰이지 않고 증발하는 **심각한 버그**가 생길 수 있다.
 
-#### 기본 스트림, 보조 스트림
+#### 기본 스트림과 보조 스트림
 
 - `FileOutputStream`처럼 단독으로 생성하여 사용할 수 있는 스트림을 **기본 스트림**이라고 한다.
-- `BufferedOutputStream`처럼 단독으로 사용할 수 없고, 다른 스트림에 부가적인 기능을 제공하는 스트림을 **보조 스트림**이라고 한다.
-- 예를 들어, `BufferedOutputStream`은 `FileOutputStream`에 데이터를 임시로 모아두는 **버퍼 기능**을 보조적으로 제공한다.
-- 따라서 보조 스트림인 `BufferedOutputStream` 객체를 생성할 때는 반드시 `FileOutputStream`과 같은 **대상 기본 스트림**이 필요하다.
+- `BufferedOutputStream`처럼 단독으로 사용할 수 없고 다른 스트림에 부가적인 기능을 제공하는 스트림을 **보조 스트림**이라고 한다.
+- 보조 스트림 객체를 생성할 때는 반드시 **대상 기본 스트림**이 필요하다.
+
+#### 버퍼를 직접 다루는 것보다 BufferedXxx의 성능이 조금 떨어지는 이유
+
+```java
+@Override
+public void write(int b) throws IOException {
+    if (lock != null) {
+        lock.lock();
+        try {
+            implWrite(b);
+        } finally {
+            lock.unlock();
+        }
+    } else {
+        synchronized (this) {
+            implWrite(b);
+        }
+    }
+}
+
+public int read() throws IOException {
+    if (lock != null) {
+        lock.lock();
+        try {
+            return implRead();
+        } finally {
+            lock.unlock();
+        }
+    } else {
+        synchronized (this) {
+            return implRead();
+        }
+    }
+}
+```
+
+- 배열(`byte[]`)로 버퍼를 직접 구현하는 방식과 `BufferedXxx` 클래스를 사용하는 방식은 둘 다 버퍼를 활용하므로 이론상 **비슷한 성능**이 나와야 한다.
+- 하지만 실제로는 버퍼를 직접 다루는 방식이 조금 더 빠른데, 그 이유는 바로 내부의 **동기화(Synchronization) 처리** 때문이다.
+- 데이터를 1바이트씩 읽고 쓸 때마다 스레드에 락(Lock)을 걸고 푸는 동기화 코드가 **반복적으로 실행**된다.
+- 이 클래스들은 초기 자바의 **멀티 스레드 환경**을 고려하여 안전하게 설계되었으나, 단일 스레드(싱글 스레드) 환경에서는 불필요한 락 처리로 인해 **성능이 약간 저하**될 수 있다.
+- 성능 최적화가 극도로 중요하다면, 내장 클래스에 의존하지 않고 기존 코드를 참고하여 동기화 블록을 제거한 **커스텀 클래스를 직접 만들어 사용**해야 한다.
