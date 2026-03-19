@@ -286,3 +286,26 @@ public int read() throws IOException {
 - 데이터를 1바이트씩 읽고 쓸 때마다 스레드에 락(Lock)을 걸고 푸는 동기화 코드가 **반복적으로 실행**된다.
 - 이 클래스들은 초기 자바의 **멀티 스레드 환경**을 고려하여 안전하게 설계되었으나, 단일 스레드(싱글 스레드) 환경에서는 불필요한 락 처리로 인해 **성능이 약간 저하**될 수 있다.
 - 성능 최적화가 극도로 중요하다면, 내장 클래스에 의존하지 않고 기존 코드를 참고하여 동기화 블록을 제거한 **커스텀 클래스를 직접 만들어 사용**해야 한다.
+
+### 4.3. 한 번에 쓰고 읽기
+
+```java
+FileOutputStream fos = new FileOutputStream(FILE_NAME);
+
+byte[] buffer = new byte[FILE_SIZE];
+for (int i = 0; i < FILE_SIZE; i++) {
+    buffer[i] = 1;
+}
+fos.write(buffer);
+fos.close();
+
+FileInputStream fis = new FileInputStream(FILE_NAME);
+
+byte[] bytes = fis.readAllBytes();
+fis.close();
+```
+
+- 파일의 크기가 크지 않다면 데이터를 **한 번에 쓰고 읽는 것도 좋은 방법**이다.
+- 입출력 속도는 가장 빠르지만 메모리를 한 번에 많이 사용하므로 파일 크기가 반드시 **작아야 한다**.
+- 실제 실행 시간은 버퍼 배열을 직접 다룬 예제와 오차 범위 내로 **거의 비슷하다**.
+- 디스크나 파일 시스템이 데이터를 읽고 쓰는 기본 단위가 보통 **4KB 또는 8KB**이기 때문에, 한 번에 모아서 쓴다고 해서 무작정 **더 빠른 것은 아니다**.
