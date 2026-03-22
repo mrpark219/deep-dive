@@ -325,3 +325,20 @@ fis.close();
   - 스트림은 오직 `byte`만 취급하기 때문에 문자를 직접 입출력할 수 없다.
   - 따라서 개발자가 직접 **문자 집합**을 지정하여 변환 과정을 거쳐야 한다.
   - 즉, `byte[]`에 문자 집합을 적용하여 `String`으로 디코딩한다.
+
+### 5.1. OutputStreamWriter, InputStreamReader
+
+#### OutputStreamWriter
+
+- `OutputStreamWriter`는 문자를 입력받고, **받은 문자를 인코딩하여 `byte[]`로 변환**한다.
+- 변환한 `byte[]`을 전달할 `OutputStream`과 인코딩 문자 집합 정보가 필요하므로, **생성자를 통해 두 정보를 함께 전달**해야 한다 (예: `new OutputStreamWriter(fos, UTF_8)`).
+- `osw.write(writeString)`처럼 **`String` 문자를 직접 전달**할 수 있다.
+- 즉, 내부적으로 문자를 인코딩하여 `byte[]`로 변환하고, **그 결과를 `FileOutputStream`에 전달**하여 저장한다.
+
+#### InputStreamReader
+
+- 데이터를 읽을 때는 `read()` 메서드를 사용하여 **문자 하나를 읽어 들인다**.
+- 실제 반환 타입은 `int`형이므로, 문자로 다루기 위해서는 **`char`형으로 캐스팅해서 사용**해야 한다 (예: `int ch = read()`).
+- 자바의 `char`형은 파일의 끝(EOF)을 의미하는 `-1`을 표현할 수 없기 때문에 **대신 `int`를 반환**하는 것이다.
+- 내부적으로는 `FileInputStream`에서 `byte[]`을 읽어오며, 이를 **문자인 `char`로 변경해서 반환**한다.
+- `byte`를 문자로 변경하는 과정이므로 반드시 **문자 집합(인코딩 셋)을 지정**해야 한다 (예: `new InputStreamReader(fis, UTF_8)`).
