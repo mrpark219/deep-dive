@@ -342,3 +342,37 @@ fis.close();
 - 자바의 `char`형은 파일의 끝(EOF)을 의미하는 `-1`을 표현할 수 없기 때문에 **대신 `int`를 반환**하는 것이다.
 - 내부적으로는 `FileInputStream`에서 `byte[]`을 읽어오며, 이를 **문자인 `char`로 변경해서 반환**한다.
 - `byte`를 문자로 변경하는 과정이므로 반드시 **문자 집합(인코딩 셋)을 지정**해야 한다 (예: `new InputStreamReader(fis, UTF_8)`).
+
+### 5.2. Reader, Writer
+
+- 자바는 데이터를 다루는 방식을 **`byte`** 를 다루는 I/O 클래스와 **문자**를 다루는 I/O 클래스 두 가지로 나누어 제공한다.
+- **`byte`를 다루는 I/O 클래스**
+  - `OutputStream`과 `InputStream`을 부모 클래스로 상속받아 `byte` 단위의 데이터를 다룬다.
+  - 클래스 이름 마지막에 보통 `OutputStream`이나 `InputStream`이 붙어있다.
+- **문자를 다루는 I/O 클래스**
+  - `Writer`와 `Reader`를 부모 클래스로 상속받아 `String`이나 `char` 같은 문자 데이터를 다룬다.
+  - 클래스 이름 마지막에 보통 `Writer`나 `Reader`가 붙어있다.
+- **`OutputStreamWriter`의 역할과 원리**
+  - 앞에서 다룬 `OutputStreamWriter`는 문자를 다루는 `Writer` 클래스의 자식이므로 `write(String)` 메서드 사용이 가능하다.
+  - 문자를 입력받아 `byte`로 변환한 뒤, 이를 다시 `byte`를 다루는 `OutputStream`으로 전달하는 역할을 한다.
+  - 여기서 가장 중요한 핵심은 **모든 데이터는 결국 `byte` 단위(숫자)로 저장된다**는 사실이다.
+  - 따라서 `Writer`가 문자를 다룬다 해도 그대로 저장할 수는 없으며, 내부적으로 지정된 **문자 집합(Charset)** 을 사용해 문자를 `byte`로 **인코딩**하여 저장한다.
+
+#### FileWriter
+
+- **객체 생성**: `new FileWriter(FILE_NAME, UTF_8)`
+  - 파일명과 문자 집합(인코딩 셋)을 전달하여 생성한다.
+  - 사실 내부적으로는 스스로 **`FileOutputStream`** 을 하나 생성해서 사용한다.
+- **문자로 직접 쓰기**: `fw.write(writeString)`
+  - 개발자 입장에서는 문자를 파일에 직접 쓰는 것처럼 편리하게 느껴진다.
+  - 하지만 실제로는 `FileWriter` 내부에서 인코딩 셋을 사용해 문자를 `byte`로 변경하고, `FileOutputStream`을 사용해 파일에 저장한다.
+
+#### FileReader
+
+- **작동 방식**: `new FileReader(FILE_NAME, UTF_8)`
+  - 앞서 설명한 `FileWriter`와 동일한 원리로 작동한다.
+  - 내부에서 **`FileInputStream`** 을 자동으로 생성해서 사용한다.
+- **`OutputStreamWriter` / `InputStreamReader`와의 차이점**
+  - `FileWriter`는 `OutputStreamWriter`를 상속받은 클래스이며, 다른 특별한 추가 기능은 없다.
+  - 유일한 차이점은 기존에 `FileOutputStream`을 직접 생성해 전달하던 번거로움을 줄이고, **생성자 내부에서 자동으로 만들어 준다는 것**이다.
+  - 결과적으로 `FileWriter`와 `FileReader`는 기존 클래스를 조금 더 편리하게 사용할 수 있도록 도와주는 **편의성 클래스** 역할을 한다.
