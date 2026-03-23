@@ -376,3 +376,75 @@ fis.close();
   - `FileWriter`는 `OutputStreamWriter`를 상속받은 클래스이며, 다른 특별한 추가 기능은 없다.
   - 유일한 차이점은 기존에 `FileOutputStream`을 직접 생성해 전달하던 번거로움을 줄이고, **생성자 내부에서 자동으로 만들어 준다는 것**이다.
   - 결과적으로 `FileWriter`와 `FileReader`는 기존 클래스를 조금 더 편리하게 사용할 수 있도록 도와주는 **편의성 클래스** 역할을 한다.
+
+### 5.3. BufferedReader, BufferedWriter
+
+```java
+FileWriter fw = new FileWriter(FILE_NAME, UTF_8);
+BufferedWriter bw = new BufferedWriter(fw, BUFFER_SIZE);
+bw.write(writeString);
+bw.close();
+
+StringBuilder content = new StringBuilder();
+FileReader fr = new FileReader(FILE_NAME, UTF_8);
+BufferedReader br = new BufferedReader(fr, BUFFER_SIZE);
+
+String line;
+while ((line = br.readLine()) != null) {
+    content.append(line).append("\n");
+}
+br.close();
+```
+
+- `BufferedOutputStream`, `BufferedInputStream`처럼 문자 스트림(`Reader`, `Writer`)에도 버퍼를 통한 성능 향상 기능을 제공하는 **`BufferedReader`** 와 **`BufferedWriter`** 클래스가 있다.
+
+#### br.readLine()을 활용한 한 줄 읽기
+
+- 문자를 다룰 때는 보통 **한 줄(라인) 단위**로 처리하는 경우가 많아, `BufferedReader`는 이를 위한 추가 기능을 제공한다.
+- `readLine()`은 텍스트를 한 줄씩 읽고 **`String`** 타입으로 반환한다.
+- 파일의 끝(**EOF**)에 도달하면 더 이상 읽을 데이터가 없으므로 **`null`** 을 반환한다.
+- 반환 타입이 참조형인 `String`이기 때문에 기존 바이트 스트림에서 쓰던 `-1`로 EOF를 표현할 수 없어 대신 `null`을 반환하는 것이다.
+
+## 6. 기타 스트림
+
+### 6.1. PrintStream
+
+```java
+FileOutputStream fos = new FileOutputStream("temp/print.txt");
+PrintStream printStream = new PrintStream(fos);
+```
+
+- 우리가 콘솔 출력을 위해 자주 사용하던 `System.out`의 실제 타입이 바로 **`PrintStream`** 이다.
+- `PrintStream`과 `FileOutputStream`을 연결하면, 마치 화면의 콘솔 창에 출력하듯이 데이터를 **파일에 쉽게 출력**할 수 있다.
+
+### 6.2. DataOutputStream / DataInputStream
+
+```java
+FileOutputStream fos = new FileOutputStream("temp/data.dat");
+DataOutputStream dos = new DataOutputStream(fos);
+
+dos.writeUTF("회원A");
+dos.writeInt(20);
+dos.writeDouble(10.5);
+dos.writeBoolean(true);
+dos.close();
+
+FileInputStream fis = new FileInputStream("temp/data.dat");
+DataInputStream dis = new DataInputStream(fis);
+
+System.out.println(dis.readUTF());
+System.out.println(dis.readInt());
+System.out.println(dis.readDouble());
+System.out.println(dis.readBoolean());
+dis.close();
+```
+
+- **기본 데이터 타입 처리**
+  - `DataOutputStream`과 `DataInputStream`을 사용하면 자바의 기본 데이터 타입(`String`, `int`, `double`, `boolean` 등)을 번거로운 변환 과정 없이 **그대로 다룰 수 있다**.
+  - `FileOutputStream` 등과 조합하면 예제처럼 회원 데이터 같은 자바의 데이터 형을 파일에 아주 **편리하게 저장하고 불러올 수 있다**.
+- **사용 시 주의점 (순서 엄수)**
+  - 데이터를 읽을(`read`) 때는 반드시 **저장(`write`)한 순서와 타입 그대로 읽어야 한다**. 순서가 어긋나면 바이트가 엉켜 전혀 다른 잘못된 값으로 조회된다.
+- **파일이 깨져 보이는 이유**
+  - 저장된 `data.dat` 파일을 일반 텍스트 편집기로 열어보면 정상적인 글자로 보이지 않는다.
+  - `writeUTF()`는 문자열을 UTF-8 형식으로 저장하지만, 나머지 메서드들은 문자가 아니라 **각 데이터 타입의 실제 `byte` 크기 단위(예: `int`는 4바이트) 그대로 디스크에 기록**하기 때문이다.
+  - 텍스트 편집기는 이 순수한 메모리 숫자 데이터(`byte`)들을 억지로 자신의 문자 집합에 맞춰 디코딩하려고 시도하기 때문에, 문자표에 없거나 전혀 예상치 못한 이상한 문자로 깨져서 출력된다.
