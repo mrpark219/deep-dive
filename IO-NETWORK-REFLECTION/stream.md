@@ -455,3 +455,42 @@ dis.close();
   - 모든 데이터를 문자로 변환해서 저장할 때보다 **저장 용량을 최적화**할 수 있다.
   - 예를 들어 큰 숫자를 문자로 저장하면 자릿수만큼 바이트를 차지하지만, `writeInt()`를 사용하면 숫자의 크기와 상관없이 항상 **4바이트만 사용**하여 효율적이다.
   - 단점은 이렇게 바이트 형태로 직접 저장하면, 일반 문서 편집기로 파일을 열어서 내용을 직접 확인하거나 수정하기가 매우 어렵다는 것이다.
+
+### 6.3. ObjectStream과 객체 직렬화
+
+#### 객체 직렬화 (Serialization)
+
+```java
+package java.io;
+
+public interface Serializable {
+}
+```
+
+- 메모리에 있는 객체 인스턴스를 바이트 스트림으로 변환하여 파일에 저장하거나 네트워크를 통해 전송할 수 있도록 하는 기능을 **객체 직렬화(Serialization)** 라고 한다.
+- 이 과정에서 보관된 바이트 데이터를 읽어 들여 원래의 객체 상태로 다시 복원하는 것을 **역직렬화(Deserialization)** 라고 한다.
+- 객체 직렬화를 사용하려면 직렬화하려는 클래스는 반드시 **`Serializable`** 인터페이스를 구현해야 한다.
+  - 이 인터페이스에는 내부에 구현할 메서드가 전혀 없다.
+  - 단지 '이 객체는 직렬화 가능한 클래스이다'라는 것을 표시하기 위한 용도이며, 이렇게 표시가 목적인 인터페이스를 **마커 인터페이스(Marker Interface)** 라고 한다.
+  - 만약 해당 인터페이스를 구현하지 않은 객체를 직렬화하려고 시도하면 **`java.io.NotSerializableException`** 예외가 발생한다.
+- 이 기술 덕분에 객체를 편리하게 바이트로 변환하여 파일에 저장하거나 네트워크로 전송할 수 있어, 자바 초창기에는 분산 시스템 등에서 널리 활용되었다.
+  - 하지만 1990년대에 등장한 오래된 기술이라 시간이 지나면서 보안 취약점 등 여러 단점이 드러났다.
+  - 현재는 훌륭한 대안 기술들이 많이 등장했기 때문에 실무에서는 **거의 사용하지 않는 기술**이 되었다.
+- `serialVersionUID`: 클래스 구조가 변경되었는지 확인하기 위해 객체 직렬화의 고유 버전을 관리하는 식별자 역할을 한다.
+- `transient` 키워드: 보안상 민감하거나 굳이 저장할 필요가 없어 이 키워드가 붙은 필드는 직렬화 과정에서 제외(무시)된다.
+
+#### ObjectOutputStream / ObjectInputStream
+
+```java
+ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(FILE_PATH));
+oos.writeObject(members);
+
+ObjectInputStream ois = new ObjectInputStream(new FileInputStream(FILE_PATH));
+Object findObject = ois.readObject();
+```
+
+- **`ObjectOutputStream`** 을 사용하면 객체 인스턴스를 직렬화해서 `byte`로 변경할 수 있다.
+  - 단일 객체뿐만 아니라, `members`와 같은 컬렉션 객체 전체도 한 번에 직렬화하여 파일에 저장할 수 있다.
+- **`ObjectInputStream`** 을 사용하면 `byte`를 역직렬화해서 다시 객체 인스턴스로 만들 수 있다.
+  - `ois.readObject()` 메서드를 호출하여 역직렬화를 수행한다.
+  - 이때 메서드의 반환 타입이 최상위 클래스인 `Object`이므로, 반드시 원래의 객체 타입으로 **다운 캐스팅(형변환)** 해서 사용해야 한다.
