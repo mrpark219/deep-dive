@@ -13,3 +13,16 @@
 - `Files` 클래스는 기존 방식보다 성능과 편의성이 모두 **크게 개선**되었다는 장점이 있다.
 - 기존의 `File`은 과거 버전과의 호환성을 유지하기 위해 남겨둔 기능이므로, 이제는 새로운 **`Files` 사용을 우선적으로 고려**해야 한다.
 - 내부적으로 수많은 유틸리티 기능을 제공하므로, `File` 클래스나 관련 스트림(`FileInputStream`, `FileWriter` 등)을 직접 사용하기 전에 **`Files`가 제공하는 기능**을 먼저 찾아보는 것이 좋다.
+
+## 3. 경로 표시
+
+- 파일이나 디렉토리의 경로는 크게 **절대 경로**와 **정규 경로**로 나눌 수 있다.
+  - **절대 경로(Absolute path)**: 경로의 처음부터 입력한 모든 경로를 있는 그대로 다 표현한다.
+  - **정규 경로(Canonical path)**: `..`(상위 디렉토리)와 같은 경로 계산을 모두 마쳐서 최종적으로 **단 하나만 존재하는 경로**이다.
+- 예를 들어 절대 경로는 `/Users/mrpark219/workspace/java-io-network-reflection-study`와 `/Users/mrpark219/workspace/java-io-network-reflection-study/temp/..` 두 가지 모두 표현이 가능하다.
+  - 하지만 이를 계산한 정규 경로는 `/Users/mrpark219/workspace/java-io-network-reflection-study` **하나만 가능**하다.
+- **`file.listFiles()`**
+  - 기존 `File` 클래스에서 제공하며, 현재 경로에 있는 모든 파일 또는 디렉토리를 반환한다.
+- **`Files.list(path)`**
+  - 새로운 `Files` 클래스에서 제공하며, 현재 경로에 있는 모든 파일 또는 디렉토리를 반환한다.
+  - 반환되는 `Stream` 객체는 `toList()` 메서드를 통해 우리가 잘 아는 **`List` 컬렉션**으로 변경해서 사용할 수 있다.
