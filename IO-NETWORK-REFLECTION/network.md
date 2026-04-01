@@ -56,3 +56,7 @@ graph LR
 - 객체나 컴퓨터 시스템은 상황에 따라 역할이 유동적으로 변할 수 있다.
 - `Main`이 `Service`를 호출할 때는 `Service`가 서버지만, 그 `Service`가 다시 `Repository`를 호출할 때는 `Service`가 클라이언트, `Repository`가 서버가 된다.
 - 즉, 하나의 대상이 상황에 따라 **서버이면서 동시에 클라이언트**가 될 수 있다.
+
+## 2. 네트워크 기본 이론
+
+[인터넷 통신](../HTTP/http-internet-communication.md)
