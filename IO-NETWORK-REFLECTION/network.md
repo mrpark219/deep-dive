@@ -60,3 +60,61 @@ graph LR
 ## 2. 네트워크 기본 이론
 
 [인터넷 통신](../HTTP/http-internet-communication.md)
+
+## 3. InetAddress
+
+- 자바의 **`InetAddress`** 클래스를 사용하면 호스트 이름(Domain)을 통해 대상의 IP 주소를 찾을 수 있다.
+- IP 주소를 찾는 과정은 다음과 같다.
+  - 먼저 `InetAddress.getByName("호스트명")` 메서드를 사용하여 IP 주소 조회를 요청한다.
+  - 이 과정에서 운영체제 시스템의 **로컬 호스트 파일**을 가장 먼저 확인한다.
+    - 리눅스, Mac: `/etc/hosts`
+    - 윈도우: `C:\Windows\System32\drivers\etc\hosts`
+  - 만약 호스트 파일에 해당 이름이 정의되어 있지 않다면, 외부의 **DNS 서버**에 요청하여 최종적으로 IP 주소를 얻어온다.
+
+## 4. Socket 연결과정
+
+### 4.1. 클라이언트
+
+```java
+Socket socket = new Socket("localhost", PORT);
+DataInputStream input = new DataInputStream(socket.getInputStream());
+DataOutputStream output = new DataOutputStream(socket.getOutputStream());
+
+output.writeUTF("TEST");
+String received = input.readUTF();
+```
+
+- `localhost`를 통해 지정된 포트(예: 12345)로 TCP 접속을 시도한다.
+- `localhost`는 IP가 아니므로 내부적으로 `InetAddress`를 사용하여 `127.0.0.1`이라는 매핑된 IP를 찾은 후 접속을 시도한다.
+- 연결이 성공적으로 완료되면 서버와 통신할 수 있는 연결점인 **`Socket`** 객체를 반환한다.
+- `Socket`은 서버와 데이터를 주고받기 위한 **스트림**을 제공한다.
+  - **`InputStream`**: 서버에서 전달한 데이터를 클라이언트가 받을 때 사용한다.
+  - **`OutputStream`**: 클라이언트에서 서버에 데이터를 전달할 때 사용한다.
+- 순수 바이트(`byte`) 단위 변환의 번거로움을 줄이기 위해, 주로 `DataInputStream`이나 `DataOutputStream` 같은 보조 스트림을 연결하여 자바 데이터 타입 메시지를 편리하게 주고받는다.
+
+### 4.2. 서버
+
+```java
+ServerSocket serverSocket = new ServerSocket(PORT);
+```
+
+- 클라이언트가 지정된 포트로 접속할 수 있도록 서버는 포트를 열어두어야 하며, 이때 **`ServerSocket`**(서버 소켓)이라는 특별한 소켓을 사용한다.
+- 클라이언트가 해당 포트에 연결을 시도하면 운영체제(OS) 계층에서 **TCP 3-way handshake**가 발생하고 TCP 연결이 완료된다.
+- 연결이 완료되면 서버의 운영체제는 **backlog queue**라는 공간에 클라이언트와 서버의 TCP 연결 정보(IP, PORT)를 보관한다.
+
+```java
+Socket socket = serverSocket.accept();
+```
+
+- `ServerSocket`은 단지 클라이언트와의 접속 연결(TCP)만 지원하는 특별한 소켓이므로, 실제 정보를 주고받기 위해서는 일반 **`Socket`** 객체가 별도로 필요하다.
+- **`accept()`** 메서드를 호출하면 `backlog queue`에서 대기 중인 TCP 연결 정보를 조회한다.
+  - 만약 큐에 연결 정보가 없다면 새로운 연결 정보가 생성될 때까지 **대기(블로킹)** 한다.
+  - 연결 정보를 기반으로 통신용 `Socket` 객체를 생성하여 반환하고, 사용한 정보는 큐에서 제거한다.
+- 연결된 소켓을 통해 클라이언트와 서버는 서로 데이터를 주고받게 되며, 클라이언트의 Output은 서버의 Input으로, 서버의 Output은 클라이언트의 Input으로 교차 연결된다.
+
+### 4.3. 클라이언트와 랜덤 포트
+
+- TCP 통신 시에는 클라이언트와 서버 양쪽 모두의 IP와 포트 정보가 필요하다.
+- 클라이언트가 접속할 위치를 알아야 하므로 **서버의 포트는 명확하게 고정**되어 있어야 한다.
+- 반면 통신을 시작하는 클라이언트의 경우에는 자신의 포트를 명시적으로 지정할 필요가 없다.
+- 포트를 생략하고 연결을 시도하면, 클라이언트 PC의 운영체제가 현재 사용하지 않는 남는 포트 중 하나를 **랜덤으로 자동 할당**하여 통신에 사용한다.
