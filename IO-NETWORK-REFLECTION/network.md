@@ -159,3 +159,73 @@ while(true) {
   - **`accept()`**: 새로운 클라이언트와의 접속 연결을 맺기 위해 대기
   - **`readXxx()`**: 연결된 클라이언트로부터 메시지가 도착하기를 대기
 - 하나의 스레드에서 어느 한쪽의 블로킹 메서드에 멈춰 있으면 다른 작업을 전혀 수행할 수 없으므로, 이러한 각각의 블로킹 작업은 반드시 **별도의 스레드**를 할당하여 분리해서 처리해야 한다.
+
+### 5.3. 멀티 스레드 서버의 동작 원리
+
+```java
+while (true) {
+    Socket socket = serverSocket.accept(); // 블로킹
+    log("소켓 연결: " + socket);
+
+    SessionV3 session = new SessionV3(socket);
+    Thread thread = new Thread(session);
+    thread.start();
+}
+```
+
+```java
+public class SessionV3 implements Runnable {
+
+    private final Socket socket;
+
+    public SessionV3(Socket socket) {
+        this.socket = socket;
+    }
+
+    @Override
+    public void run() {
+        try {
+            DataInputStream input = new DataInputStream(socket.getInputStream());
+            DataOutputStream output = new DataOutputStream(socket.getOutputStream());
+
+            while (true) {
+                // 클라이언트로부터 문자 받기
+                String received = input.readUTF();
+                log("client -> server: " + received);
+
+                if (received.equals("exit")) {
+                    break;
+                }
+
+                // 클라이언트에게 문자 보내기
+                String toSend = received + " World!";
+                output.writeUTF(toSend);
+                log("client <- server: " + toSend);
+            }
+
+            // 자원 정리
+            log("연결 종료: " + socket);
+            input.close();
+            output.close();
+            socket.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+}
+```
+
+- 클라이언트가 서버에 접속하면 서버 소켓의 `accept()` 메서드가 통신용 **`Socket`** 을 반환한다.
+- `main` 스레드는 이 소켓 정보를 기반으로 `Runnable`을 구현한 **`Session`** 이라는 별도의 객체를 만들고, 이를 새로운 스레드(예: `Thread-0`)에서 실행한다.
+- 생성된 `Session` 객체와 새 스레드는 해당 클라이언트 전담이 되어 메시지를 서로 주고받는다.
+- 또 다른 새로운 접속(TCP 연결)이 발생하면, `main` 스레드는 다시 새로운 `Session` 객체를 생성하고 또 다른 별도의 스레드(예: `Thread-1`)에 처리를 맡기는 과정을 반복한다.
+
+#### 역할의 분리
+
+- **`main` 스레드의 역할**
+  - 서버 소켓을 생성하고 `serverSocket.accept()`를 호출하여 새로운 연결을 **대기(블로킹)** 한다.
+  - 새로운 접속이 발생할 때마다 전담 `Session` 객체와 **별도의 스레드를 생성**하여 실행을 위임하고, 자신은 즉시 다음 연결을 받기 위해 대기 상태로 돌아간다.
+- **`Session` 전담 스레드의 역할**
+  - 생성자를 통해 할당받은 특정 클라이언트의 **`Socket`** 객체를 전달받는다.
+  - `Runnable`을 구현하여 `main` 스레드와는 **분리된 별도의 스레드에서 실행**된다.
+  - 오직 자신과 연결된 단일 클라이언트와 스트림을 통해 메시지를 **반복해서 주고받는 역할**만 온전히 수행한다.
