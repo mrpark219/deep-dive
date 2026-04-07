@@ -238,3 +238,34 @@ public class SessionV3 implements Runnable {
 - **자원 정리 순서**
   - 서로 관련된 자원을 해제할 때는 **나중에 생성한 자원을 먼저 정리**해야 한다.
   - 예를 들어 `resource1`을 만들고 이를 기반으로 `resource2`를 생성했다면, 자원을 닫을 때는 역순으로 `resource2`, `resource1` 순서로 처리해야 한다.
+
+### 6.1. try-catch-finally 자원 정리의 문제점
+
+```java
+try {
+    resource1 = new ResourceV1("resource1");
+    resource2 = new ResourceV1("resource2");
+
+    resource1.call();
+    resource2.callEx(); // CallException 발생
+} catch (CallException e) {
+    System.out.println("ex: " + e);
+    throw e;
+} finally {
+    if (resource2 != null) {
+        resource2.closeEx(); // CloseException 발생!
+    }
+    if (resource1 != null) {
+        resource1.closeEx(); // 이 코드 호출 안됨!
+    }
+}
+```
+
+- `finally` 블록을 사용하면 실행 결과와 상관없이 자원 정리 코드가 호출되도록 할 수 있지만, 객체 생성 도중 예외가 발생할 수 있으므로 매번 번거로운 **`null` 체크**가 필요하다.
+- 더 큰 문제는 위와 같은 `try-catch-finally` 구조가 다음과 같은 **두 가지 치명적인 한계**를 가진다는 점이다.
+  - **자원 정리 누락 문제**
+    - `finally` 블록 안에서 `resource2`를 닫다가 예외(`CloseException`)가 발생하면 그 즉시 실행 흐름이 밖으로 던져진다.
+    - 결과적으로 그 아래에 작성된 `resource1.closeEx()`는 아예 호출되지 않아 **나머지 자원이 정상적으로 닫히지 않는 문제**가 발생한다.
+  - **핵심 예외 소실 문제**
+    - 실제 비즈니스 로직에서 발생한 진짜 원인인 **핵심 예외**(`CallException`)가 발생했음에도 불구하고, 자원을 정리하다 발생한 부가적인 예외(`CloseException`)가 이를 **덮어씌워 버린다**.
+    - 메서드를 호출한 쪽에서는 진짜 원인인 핵심 예외가 아니라 `finally`에서 덮어씌워진 예외를 받게 되므로, 원인 파악과 디버깅이 매우 어려워진다.
