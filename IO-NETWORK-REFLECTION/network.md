@@ -269,3 +269,46 @@ try {
   - **핵심 예외 소실 문제**
     - 실제 비즈니스 로직에서 발생한 진짜 원인인 **핵심 예외**(`CallException`)가 발생했음에도 불구하고, 자원을 정리하다 발생한 부가적인 예외(`CloseException`)가 이를 **덮어씌워 버린다**.
     - 메서드를 호출한 쪽에서는 진짜 원인인 핵심 예외가 아니라 `finally`에서 덮어씌워진 예외를 받게 되므로, 원인 파악과 디버깅이 매우 어려워진다.
+
+### 6.2. 개선된 finally 자원 정리와 남은 한계
+
+```java
+try {
+    resource1 = new ResourceV1("resource1");
+    resource2 = new ResourceV1("resource2");
+
+    resource1.call();
+    resource2.callEx(); // CallException 발생
+} catch (CallException e) {
+    System.out.println("ex: " + e);
+    throw e;
+} finally {
+    if (resource2 != null) {
+        try {
+            resource2.closeEx(); // CloseException 발생!
+        } catch (CloseException e) {
+            // close()에서 발생한 예외는 버린다. 필요하면 로깅 정도
+            System.out.println("close ex: " + e);
+        }
+    }
+    if (resource1 != null) {
+        try {
+            resource1.closeEx();
+        } catch (CloseException e) {
+            System.out.println("close ex: " + e);
+        }
+    }
+}
+```
+
+- `finally` 블록 안에서 각각의 자원을 닫을 때 발생하는 예외를 다시 `try-catch`로 잡아서 처리하도록 코드를 개선한 방식이다.
+- 자원 정리 시점에 발생한 예외는 당장 더 처리할 수 있는 부분이 없으므로, **로그를 남겨서 개발자가 인지**할 수 있게 하는 정도로 충분하다.
+- 이렇게 수정하면 이전 코드에서 발생했던 **두 가지 치명적인 문제**를 해결할 수 있다.
+  - `close()` 시점에 예외가 던져지더라도 이를 내부에서 처리하므로, 흐름이 끊기지 않고 **이후의 다른 자원들을 정상적으로 닫을 수 있다**.
+  - 자원 정리 중 발생한 부가 예외가 기존의 예외를 덮어씌우는 현상을 방지하여, 진짜 원인인 **핵심 예외가 안전하게 보존**된다.
+- 치명적인 문제들은 해결되었지만, 이 방식 역시 코드 구조상 다음과 같은 **여러 한계점**이 여전히 남아 있다.
+  - `try` 블록과 `finally` 블록의 변수 스코프(범위)가 달라서, 자원 변수를 **선언함과 동시에 할당할 수 없다**.
+  - `catch` 블록이 실행된 이후에야 `finally`가 호출되므로 **자원 정리가 조금 늦어진다**.
+  - 개발자가 실수로 `close()` 호출 코드를 작성하지 않아 자원이 누락될 **휴먼 에러의 위험성**이 존재한다.
+  - 자원은 생성한 순서의 역순으로 닫아야 하는데, 개발자가 **닫는 순서를 실수할 가능성**이 있다.
+- 과거 수많은 자바 개발자들을 고통받게 했던 이러한 복잡한 자원 정리 문제들을 한 번에 깔끔하게 해결해 주는 문법이 바로 **`try-with-resources`** 구문이다.
