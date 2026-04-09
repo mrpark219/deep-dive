@@ -312,3 +312,47 @@ try {
   - 개발자가 실수로 `close()` 호출 코드를 작성하지 않아 자원이 누락될 **휴먼 에러의 위험성**이 존재한다.
   - 자원은 생성한 순서의 역순으로 닫아야 하는데, 개발자가 **닫는 순서를 실수할 가능성**이 있다.
 - 과거 수많은 자바 개발자들을 고통받게 했던 이러한 복잡한 자원 정리 문제들을 한 번에 깔끔하게 해결해 주는 문법이 바로 **`try-with-resources`** 구문이다.
+
+### 6.3. try-with-resources 구문을 통한 완벽한 자원 정리
+
+```java
+public class ResourceV2 implements AutoCloseable {
+    @Override
+    public void close() throws CloseException {
+        System.out.println(name + " close");
+        throw new CloseException(name + " ex");
+    }
+}
+```
+
+```java
+try (ResourceV2 resource1 = new ResourceV2("resource1");
+     ResourceV2 resource2 = new ResourceV2("resource2")) {
+
+    resource1.call();
+    resource2.callEx(); // CallException 발생
+} catch (CallException e) {
+    System.out.println("ex: " + e);
+    throw e; // CallException
+}
+```
+
+- `try-with-resources` 구문을 사용하려면 해당 자원 클래스가 반드시 **`AutoCloseable`** 인터페이스를 구현해야 한다.
+- 위 코드에서는 자원이 닫힐 때 `close()` 메서드가 항상 `CloseException`을 던지도록 설정했다.
+- **`try-with-resources`** 구문은 단순히 `close()`를 자동으로 호출해 주는 것을 넘어, 앞서 `finally` 방식에서 겪었던 문제들을 해결하는 강력한 장치이다.
+
+#### try-with-resources의 장점
+
+- **리소스 누수 방지**: 모든 리소스가 무조건 제대로 닫히도록 보장하여, `finally` 블록 작성 누락이나 내부 자원 해제 코드 누락 등의 휴먼 에러를 원천적으로 예방한다.
+- **코드 간결성 및 가독성 향상**: 명시적으로 `close()`를 호출하는 복잡한 코드가 사라져 코드가 훨씬 간결해진다.
+- **스코프 범위 한정**: 리소스로 사용되는 변수(`resource1`, `resource2`)의 스코프(범위)가 `try` 블록 안으로만 깔끔하게 한정되므로 유지보수가 쉬워진다.
+- **조금 더 빠른 자원 해제**: 기존 방식처럼 `catch`나 `finally`로 넘어간 후 닫는 것이 아니라, `try` 블록의 실행이 끝나는 즉시 `close()`를 우선 호출하여 자원을 더 빠르게 반납한다.
+- **정확한 자원 정리 순서**: 먼저 선언한 자원을 나중에 정리하는 역순 구조를 알아서 안전하게 지켜준다.
+
+#### 예외 처리와 부가 예외(Suppressed) 포함
+
+- 만약 핵심 로직을 실행하다가 예외가 발생하고, 자원을 닫는 `close()` 과정에서도 부가 예외가 동시에 발생하면 어떻게 될까?
+- 기존 `finally` 구조에서는 부가 예외가 핵심 예외를 덮어씌워 버렸지만, `try-with-resources`는 진짜 원인인 **핵심 예외를 정상적으로 반환**한다.
+- 이때 자원을 닫다가 발생한 부가 예외는 버려지지 않고, 핵심 예외 안에 **`Suppressed`(억제된 예외)** 형태로 안전하게 담겨서 함께 반환된다.
+- 개발자는 디버깅 시 **`e.getSuppressed()`** 메서드를 호출하여 자원 정리 중에 발생한 부가 예외 내역도 빠짐없이 확인할 수 있다.
+- 참고로 자바 예외 처리의 `e.addSuppressed(ex)` 기능 역시 이 `try-with-resources` 문법과 함께 도입된 기능이다.
