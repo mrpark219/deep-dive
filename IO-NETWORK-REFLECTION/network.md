@@ -356,3 +356,12 @@ try (ResourceV2 resource1 = new ResourceV2("resource1");
 - 이때 자원을 닫다가 발생한 부가 예외는 버려지지 않고, 핵심 예외 안에 **`Suppressed`(억제된 예외)** 형태로 안전하게 담겨서 함께 반환된다.
 - 개발자는 디버깅 시 **`e.getSuppressed()`** 메서드를 호출하여 자원 정리 중에 발생한 부가 예외 내역도 빠짐없이 확인할 수 있다.
 - 참고로 자바 예외 처리의 `e.addSuppressed(ex)` 기능 역시 이 `try-with-resources` 문법과 함께 도입된 기능이다.
+
+### 6.4. 참고 - 윈도우 OS에서 오류 발생
+
+- 클라이언트 프로세스를 직접 종료하여 클라이언트와 서버의 TCP 연결이 함께 종료될 때, 운영체제(OS)에 따라 발생하는 예외가 다르다.
+- 맥(Mac) OS에서는 `java.io.EOFException`이 발생하지만, 윈도우(Windows) OS에서는 **`java.net.SocketException: Connection reset`** 이 발생한다.
+- 하지만 두 예외 모두 **`java.io.IOException`** 의 자식 클래스이므로, `catch (IOException e)` 구문을 통해 동일하게 잡아서 처리할 수 있다.
+- 이렇게 OS별로 예외 차이가 발생하는 이유는, 소켓을 정상적으로 닫지 않고 프로그램이 종료되었을 때 각 OS가 남아있는 TCP 연결을 정리하는 방식이 다르기 때문이다.
+  - **Mac**: 남아있는 TCP 연결을 **정상 종료** 방식으로 처리한다.
+  - **Windows**: 남아있는 TCP 연결을 **강제 종료** 방식으로 처리한다.
