@@ -365,3 +365,20 @@ try (ResourceV2 resource1 = new ResourceV2("resource1");
 - 이렇게 OS별로 예외 차이가 발생하는 이유는, 소켓을 정상적으로 닫지 않고 프로그램이 종료되었을 때 각 OS가 남아있는 TCP 연결을 정리하는 방식이 다르기 때문이다.
   - **Mac**: 남아있는 TCP 연결을 **정상 종료** 방식으로 처리한다.
   - **Windows**: 남아있는 TCP 연결을 **강제 종료** 방식으로 처리한다.
+
+### 6.5. 외부 자원의 try-with-resources 활용
+
+```java
+try (socket;
+     DataInputStream input = new DataInputStream(socket.getInputStream());
+     DataOutputStream output = new DataOutputStream(socket.getOutputStream())) {
+
+    // ...
+
+} catch (IOException e) {
+    log(e);
+}
+```
+
+- `Socket` 객체처럼 현재 클래스(`Session`) 내부에서 직접 생성하는 것이 아니라 **외부에서 전달(주입)받은 객체**도 `try-with-resources` 구문을 통해 안전하게 자원을 해제할 수 있다.
+- 위 예제 코드처럼 `try` 괄호 선언부에 새로 객체를 생성하지 않고 기존 객체의 참조 변수(`socket`)만 단독으로 넣어두면, 해당 블록이 끝나는 자원 정리 시점에 알아서 **`AutoCloseable`의 `close()` 메서드가 정상적으로 호출**된다. (자바 9부터 지원되는 문법)
