@@ -382,3 +382,52 @@ try (socket;
 
 - `Socket` 객체처럼 현재 클래스(`Session`) 내부에서 직접 생성하는 것이 아니라 **외부에서 전달(주입)받은 객체**도 `try-with-resources` 구문을 통해 안전하게 자원을 해제할 수 있다.
 - 위 예제 코드처럼 `try` 괄호 선언부에 새로 객체를 생성하지 않고 기존 객체의 참조 변수(`socket`)만 단독으로 넣어두면, 해당 블록이 끝나는 자원 정리 시점에 알아서 **`AutoCloseable`의 `close()` 메서드가 정상적으로 호출**된다. (자바 9부터 지원되는 문법)
+
+### 6.6. 서버를 안정적으로 종료하는 방법
+
+- 서버를 종료하려면 서버에 먼저 종료라는 신호를 전달해야 한다.
+- 보통 서버 환경에서는 콘솔 입력을 잘 사용하지 않으므로, 프로세스를 직접 종료시키면서도 열려있는 자원들을 안전하게 함께 정리하는 방법이 필요하다.
+
+#### 셧다운 훅 (Shutdown Hook)
+
+- 자바는 프로세스가 종료될 때, 자원 정리나 로그 기록과 같은 마무리 작업을 수행할 수 있도록 **셧다운 훅(Shutdown Hook)** 이라는 기능을 지원한다.
+- 프로세스의 종료는 크게 다음 두 가지로 분류할 수 있다.
+  - **정상 종료**: 셧다운 훅이 정상적으로 작동하여 프로세스 종료 전에 필요한 후처리(자원 반납 등)를 안전하게 수행할 수 있다.
+    - 모든 non-데몬 스레드의 실행이 완료되어 자바 프로세스가 자연스럽게 종료될 때
+    - 사용자가 터미널에서 `Ctrl + C`를 눌러 프로그램을 중단할 때
+    - 운영체제에서 시스템 `kill` 명령어(`kill -9` 제외)를 전달할 때
+    - IntelliJ 등 IDE의 종료(Stop) 버튼을 누를 때
+  - **강제 종료**: 셧다운 훅이 전혀 작동하지 않고 즉시 프로세스가 꺼져버린다.
+    - 운영체제가 시스템 보호 등을 이유로 해당 프로세스를 더 이상 유지할 수 없다고 판단할 때
+    - 리눅스/유닉스의 `kill -9` 명령어
+    - 윈도우의 `taskkill /F` 명령어
+
+#### Session Manager
+
+```java
+public class SessionManager {
+
+    private List<Session> sessions = new ArrayList<>();
+
+    public synchronized void add(Session session) {
+        sessions.add(session);
+    }
+
+    public synchronized void remove(Session session) {
+        sessions.remove(session);
+    }
+
+    public synchronized void closeAll() {
+        for (Session session : sessions) {
+            session.close();
+        }
+        sessions.clear();
+    }
+}
+```
+
+- 각 세션은 소켓과 연결 스트림을 가지고 있으므로, 서버를 종료할 때는 생성된 모든 세션을 찾아 종료하고 관리할 **세션 매니저(SessionManager)** 객체가 필요하다.
+- 세션 매니저는 새로운 연결 시 **`add()`** 로 세션을 리스트에 추가하고, 연결이 끊어지면 **`remove()`** 로 제거하며, 서버 종료 시 **`closeAll()`** 로 보관된 모든 세션을 닫고 정리한다.
+- 서버를 종료하는 시점에도 외부(`SessionManager`)에서 세션 자원을 해제해야 하므로, 자원의 선언과 정리를 한 블록으로 묶어서 처리하는 **`try-with-resources` 구문은 `Session` 내부에서 사용할 수 없다**.
+- 자원을 정리하는 `close()` 작업은 클라이언트 연결이 종료될 때와 서버가 종료될 때 각각 다른 스레드에서 동시에 호출될 가능성이 있다.
+- 이러한 **동시성 문제**를 막기 위해 위 코드처럼 세션 매니저의 기능들에 **`synchronized`** 키워드를 사용하고, 세션 내부에서도 자원 정리가 중복 실행되지 않도록 안전장치를 마련해야 한다.
