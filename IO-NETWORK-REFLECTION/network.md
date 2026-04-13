@@ -390,6 +390,27 @@ try (socket;
 
 #### 셧다운 훅 (Shutdown Hook)
 
+```java
+// ShutdownHook 등록
+ShutdownHook shutdownHook = new ShutdownHook(serverSocket, sessionManager);
+Runtime.getRuntime().addShutdownHook(new Thread(shutdownHook, "shutdown"));
+
+// 셧다운 훅 실행 코드
+@Override
+public void run() {
+    log("shutdownHook 실행");
+    try {
+        sessionManager.closeAll();
+        serverSocket.close();
+
+        Thread.sleep(1000); // 자원 정리 대기
+    } catch (Exception e) {
+        e.printStackTrace();
+        System.out.println("e = " + e);
+    }
+}
+```
+
 - 자바는 프로세스가 종료될 때, 자원 정리나 로그 기록과 같은 마무리 작업을 수행할 수 있도록 **셧다운 훅(Shutdown Hook)** 이라는 기능을 지원한다.
 - 프로세스의 종료는 크게 다음 두 가지로 분류할 수 있다.
   - **정상 종료**: 셧다운 훅이 정상적으로 작동하여 프로세스 종료 전에 필요한 후처리(자원 반납 등)를 안전하게 수행할 수 있다.
@@ -401,6 +422,9 @@ try (socket;
     - 운영체제가 시스템 보호 등을 이유로 해당 프로세스를 더 이상 유지할 수 없다고 판단할 때
     - 리눅스/유닉스의 `kill -9` 명령어
     - 윈도우의 `taskkill /F` 명령어
+- 위 코드에서 `Thread.sleep(1000)`을 호출하여 자원 정리를 대기하는 이유는, 사용자의 인터럽트(`Ctrl + C` 등)로 정상 종료가 발생할 때 **JVM이 non-데몬 스레드가 작업을 마칠 때까지 기다려주지 않기 때문**이다.
+- 이러한 종료 상황에서 JVM은 오직 **셧다운 훅의 실행이 끝날 때까지만 대기**하며, 훅의 실행이 끝나면 다른 스레드들의 완료 여부와 상관없이 프로세스를 즉시 종료해 버린다.
+- 따라서 `sessionManager.closeAll()`을 통해 다른 스레드들에게 자원을 정리하라고 명령한 뒤, 그 스레드들이 자원을 완벽히 닫고 필요한 로그를 남길 수 있는 시간을 벌어주기 위해 셧다운 훅 내부에서 **잠시 대기(sleep)** 하는 것이다.
 
 #### Session Manager
 
