@@ -15,3 +15,7 @@
 ## 4. 네트워크
 
 [네트워크](./network.md)
+
+## 5. 네트워크 예외
+
+[네트워크 예외](./network-exception.md)
