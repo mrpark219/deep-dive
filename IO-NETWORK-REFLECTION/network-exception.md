@@ -1,21 +1,50 @@
 # 네트워크 예외
 
-## 1. java.net.UnknownHostException
+## 1. 연결 예외
+
+### 1.1 java.net.UnknownHostException
 
 - 입력한 호스트 이름이나 IP 주소를 시스템이 아예 찾을 수 없을 때 발생하는 예외이다.
 - `999.999.999.999`처럼 존재하지 않는 IP를 입력하거나, `google.gogo`처럼 존재하지 않는 도메인 이름을 사용할 때 발생한다.
 
-## 2. java.net.ConnectException: Connection refused
+### 1.2. java.net.ConnectException: Connection refused
 
 - **`Connection refused`** 메시지는 네트워크를 통해 대상 IP의 서버 컴퓨터 자체에는 도달했지만, 최종적인 통신 연결은 거절되었다는 뜻이다.
 - 대상 IP의 서버는 켜져 있지만, 클라이언트가 접속을 시도한 **포트(PORT)** 를 서버 애플리케이션이 열어두지 않았을 때 주로 발생한다.
 - 또는 네트워크 방화벽 등에서 해당 요청을 무단 연결로 인지하고 강제로 막을 때도 발생할 수 있다.
 
-### 2.1. 윈도우 OS
+#### 윈도우 OS
 
 - 윈도우 운영체제의 경우 기본 예외 메시지 끝에 `connect`가 추가로 붙어 **`java.net.ConnectException: Connection refused: connect`** 형태로 출력되는 차이가 있다.
 
-### 2.2. TCP RST(Reset) 패킷
+#### TCP RST(Reset) 패킷
 
 - 클라이언트의 접속을 거절할 때 서버 컴퓨터의 운영체제(OS)는 클라이언트에게 **TCP RST(Reset)** 패킷을 보낸다.
 - 이 패킷은 현재 TCP 연결에 문제가 있으니 강제로 끊으라는 뜻이며, 클라이언트가 연결 시도 중 이 패킷을 받으면 즉시 연결을 해제하면서 해당 예외가 발생하게 된다.
+
+## 2. Timeout 예외
+
+```java
+socket.connect(new InetSocketAddress("192.168.1.250", 45678), 1000);
+```
+
+- 클라이언트가 해당 IP로 연결 패킷을 보냈지만 서버가 존재하지 않거나, 서버에 문제가 생겨 응답 패킷을 보내지 못할 때 발생한다.
+- 이때 무한정 기다리는 것을 방지하기 위해 운영체제(OS)에는 **연결 대기 타임아웃**이 기본적으로 설정되어 있다.
+- OS별 기본 대기 시간은 윈도우 약 21초, 리눅스 75~180초, 맥(Mac) 약 75초 수준이다.
+- 이 대기 시간이 지나면 **`java.net.ConnectException: Operation timed out`** 예외가 발생한다.
+- 자바의 `Socket` 객체를 생성할 때 IP와 PORT를 전달하면 즉시 연결을 시도하지만, 인자 없이 빈 소켓만 생성하면 연결을 보류할 수 있다.
+- 빈 소켓을 생성한 뒤 **`socket.connect(endpoint, timeout)`** 을 호출하면, 사용자가 밀리초(ms) 단위로 지정한 타임아웃 시간을 적용하여 연결을 시도할 수 있다.
+- 연결 대상 정보는 `SocketAddress`의 자식 객체인 **`InetSocketAddress`**(IP, PORT 기반)를 사용하여 지정한다.
+- 설정한 타임아웃 시간이 지나도 연결되지 않으면 **`java.net.SocketTimeoutException: Connect timed out`** 예외가 발생한다.
+
+### 2.1. Read 타임아웃
+
+```java
+socket.setSoTimeout(3000); // 타임아웃 시간 설정
+```
+
+- 앞에서 설명한 '연결 타임아웃'이 TCP 접속 단계에서 발생한다면, **'Read 타임아웃(소켓 타임아웃)'** 은 연결이 성공한 이후 데이터를 읽는 과정에서 발생한다.
+- 클라이언트가 요청을 보냈는데, 서버 트래픽 폭주 등의 이유로 응답이 계속 오지 않을 때 무한정 기다리는 것을 방지하기 위해 사용한다.
+- **`socket.setSoTimeout()`** 메서드를 사용하여 응답을 기다릴 최대 시간(밀리초 단위)을 설정할 수 있다.
+- 설정한 시간(예: 3초)이 지나도 데이터를 읽지 못하면 **`java.net.SocketTimeoutException: Read timed out`** 예외가 발생한다.
+- 만약 Read 타임아웃 시간을 별도로 설정하지 않으면, `read()` 메서드는 서버의 응답이 올 때까지 **무한 대기(블로킹)** 상태에 빠지게 되므로 주의해야 한다.
