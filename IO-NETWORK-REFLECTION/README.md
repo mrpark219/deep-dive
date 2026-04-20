@@ -23,3 +23,7 @@
 ## 6. 채팅 프로그램
 
 [채팅 프로그램](./chatting-program.md)
+
+## 7. HTTP 기본 이론
+
+[HTTP 기본 이름](http-../HTTP/http-basics.md)
