@@ -27,3 +27,4 @@
 ## 7. HTTP 기본 이론
 
 [HTTP 기본 이름](http-../HTTP/http-basics.md)
+[HTTP 메서드](../HTTP/http-method.md)
