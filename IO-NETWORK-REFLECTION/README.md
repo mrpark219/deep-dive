@@ -26,5 +26,9 @@
 
 ## 7. HTTP 기본 이론
 
-[HTTP 기본 이름](http-../HTTP/http-basics.md)
+[HTTP 기본 이름](../HTTP/http-basics.md)
 [HTTP 메서드](../HTTP/http-method.md)
+
+## 8. HTTP 서버 만들기
+
+[HTTP 서버 만들기](./http-server.md)
