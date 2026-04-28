@@ -123,3 +123,52 @@ System.out.println("Modifier.toString() = " + Modifier.toString(modifiers));
   - **접근 제어자**: `public`, `protected`, `default`(`package-private`), `private`
   - **비접근 제어자(기타 수정자)**: `static`, `final`, `abstract`, `synchronized`, `volatile` 등
 - 반환된 숫자는 자바가 제공하는 **`Modifier`** 클래스의 헬퍼 메서드(`Modifier.isPublic()`, `Modifier.toString()` 등)를 사용하면 **실제 적용된 수정자 문자열이나 상태 정보로 쉽게 확인**할 수 있다.
+
+### 2.3. 메서드 탐색
+
+```java
+Class<BasicData> helloClass = BasicData.class;
+
+System.out.println("==== methods() ====");
+Method[] methods = helloClass.getMethods();
+for (Method method : methods) {
+    System.out.println("method = " + method);
+}
+
+System.out.println("==== declaredMethods() ====");
+Method[] declaredMethods = helloClass.getDeclaredMethods();
+for (Method method : declaredMethods) {
+    System.out.println("declaredMethod = " + method);
+}
+```
+
+- 리플렉션을 사용하면 클래스에 정의된 메서드 정보를 배열(`Method[]`) 형태로 획득할 수 있으며, 탐색 범위에 따라 두 가지 메서드를 구분해서 사용한다.
+  - **`getMethods()`**: 해당 클래스는 물론 상위 클래스에서 상속받은 메서드까지 포함하여 **모든 `public` 메서드를 반환**한다.
+  - **`getDeclaredMethods()`**: 접근 제어자(`public`, `private` 등)와 관계없이 **해당 클래스에서 직접 선언된 모든 메서드를 반환**한다. (단, 부모로부터 상속받은 메서드는 포함하지 않는다.)
+
+### 2.4. 동적 호출
+
+```java
+public static void main(String[] args) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    BasicData helloInstance = new BasicData();
+
+    // 1. 일반적인 메서드 호출 (정적)
+    helloInstance.call(); // 코드를 변경하지 않는 이상 정적으로 고정됨
+
+    // 2. 동적 메서드 호출 (리플렉션 사용)
+    Class<? extends BasicData> helloClass = helloInstance.getClass();
+    String methodName = "hello"; // 메서드 이름을 변수로 지정 및 변경 가능
+
+    Method method1 = helloClass.getDeclaredMethod(methodName, String.class);
+    Object returnValue = method1.invoke(helloInstance, "hi");
+    System.out.println("returnValue = " + returnValue);
+}
+```
+
+- **일반적인 메서드 호출 (정적 호출)**
+  - `helloInstance.call()`과 같이 인스턴스의 참조를 통해 직접 메서드를 호출하는 가장 일반적인 방식이다.
+  - 호출할 메서드가 소스 코드 상에 하드코딩되어 있으므로, 코드를 직접 수정하고 재컴파일하지 않는 한 다른 메서드로 변경할 수 없는 **정적(Static)** 인 상태이다.
+- **리플렉션을 활용한 동적 호출**
+  - 리플렉션의 `Class.getDeclaredMethod("메서드명", 파라미터타입)`을 사용하면 원하는 메서드를 문자열 변수를 통해 찾아낼 수 있다.
+  - 찾은 메서드 객체에 **`Method.invoke(실행할_인스턴스, 전달할_인자)`** 를 호출하면, 런타임에 해당 인스턴스의 메서드를 실행하고 반환값을 얻을 수 있다.
+  - 이 방식은 호출할 메서드 대상이 코드에 고정된 것이 아니라 변수의 값에 따라 언제든지 유연하게 변경될 수 있으므로 **동적(Dynamic) 메서 호출**이라고 부른다.
