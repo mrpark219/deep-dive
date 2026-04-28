@@ -172,3 +172,79 @@ public static void main(String[] args) throws NoSuchMethodException, InvocationT
   - 리플렉션의 `Class.getDeclaredMethod("메서드명", 파라미터타입)`을 사용하면 원하는 메서드를 문자열 변수를 통해 찾아낼 수 있다.
   - 찾은 메서드 객체에 **`Method.invoke(실행할_인스턴스, 전달할_인자)`** 를 호출하면, 런타임에 해당 인스턴스의 메서드를 실행하고 반환값을 얻을 수 있다.
   - 이 방식은 호출할 메서드 대상이 코드에 고정된 것이 아니라 변수의 값에 따라 언제든지 유연하게 변경될 수 있으므로 **동적(Dynamic) 메서 호출**이라고 부른다.
+
+### 2.5. 필드 탐색
+
+```java
+Class<BasicData> helloClass = BasicData.class;
+
+System.out.println("===== fields() ====");
+Field[] fields = helloClass.getFields();
+for (Field field : fields) {
+    System.out.println("field = " + field);
+}
+
+System.out.println("==== declaredFields() ====");
+Field[] declaredFields = helloClass.getDeclaredFields();
+for (Field declaredField : declaredFields) {
+    System.out.println("declaredField = " + declaredField);
+}
+```
+
+- 리플렉션을 사용하면 클래스에 정의된 필드 정보(`Field[]`)를 획득할 수 있으며, 탐색 범위에 따라 두 가지 메서드를 구분해서 사용한다.
+  - **`getFields()`**: 해당 클래스는 물론 상위 클래스에서 상속받은 필드까지 포함하여 **모든 `public` 필드를 반환**한다.
+  - **`getDeclaredFields()`**: 접근 제어자(`public`, `private` 등)와 관계없이 **해당 클래스에서 직접 선언된 모든 필드를 반환**한다. (단, 부모로부터 상속받은 필드는 포함하지 않는다.)
+
+### 2.6. 필드 값 변경
+
+```java
+public class User {
+    private String name;
+
+    public User() {
+    }
+
+    public User(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "name='" + name + '\'' +
+                '}';
+    }
+}
+```
+
+```java
+User user = new User("userA");
+System.out.println("기존 이름 = " + user.getName());
+
+Class<? extends User> aClass = user.getClass();
+Field nameField = aClass.getDeclaredField("name");
+
+// private 필드에 접근 허용, private 메서드도 이렇게 호출 가능
+nameField.setAccessible(true);
+nameField.set(user, "userB");
+System.out.println("변경된 이름 = " + user.getName());
+```
+
+- 리플렉션은 **`private` 필드나 메서드에 접근할 수 있는 특별한 기능**을 제공한다.
+  - **`setAccessible(true)`**: 이 옵션을 켜면 자바의 접근 제어자를 무시하고 `private` 요소에 강제로 접근할 수 있다. (메서드를 나타내는 `Method` 객체에도 동일하게 적용하여 `private` 메서드를 호출할 수 있다.)
+  - **`Field.set(인스턴스, 변경할_값)`**: 특정 인스턴스에 있는 해당 필드의 값을 원하는 값으로 동적으로 변경한다.
+
+#### 참고: 리플렉션 사용 시 주의사항
+
+- 리플렉션을 활용해 `private` 접근 제어자를 무시하고 값을 변경하는 것은 내부 데이터를 보호하는 **객체 지향 프로그래밍의 핵심 원칙인 캡슐화를 정면으로 위반**하는 행위이다.
+- 클래스의 내부 구조나 세부 구현 사항(필드명 변경 등)이 바뀔 경우, 리플렉션에 의존하는 코드는 컴파일 타임에 오류를 잡지 못하고 런타임에 쉽게 깨지게 되어 **유지보수성에 큰 악영향**을 초래한다.
+- 따라서 리플렉션은 프레임워크, 라이브러리 개발이나 테스트 환경 같은 **특수한 상황에서만 제한적으로 유용하게 사용**해야 한다.
+- 일반적인 비즈니스 애플리케이션 코드에서는 무분별한 리플렉션 사용을 엄격히 지양하고, 가급적 **접근 메서드(Getter, Setter)** 를 사용하여 가독성과 안전성을 유지하는 것이 바람직하다.
