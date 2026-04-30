@@ -248,3 +248,49 @@ System.out.println("변경된 이름 = " + user.getName());
 - 클래스의 내부 구조나 세부 구현 사항(필드명 변경 등)이 바뀔 경우, 리플렉션에 의존하는 코드는 컴파일 타임에 오류를 잡지 못하고 런타임에 쉽게 깨지게 되어 **유지보수성에 큰 악영향**을 초래한다.
 - 따라서 리플렉션은 프레임워크, 라이브러리 개발이나 테스트 환경 같은 **특수한 상황에서만 제한적으로 유용하게 사용**해야 한다.
 - 일반적인 비즈니스 애플리케이션 코드에서는 무분별한 리플렉션 사용을 엄격히 지양하고, 가급적 **접근 메서드(Getter, Setter)** 를 사용하여 가독성과 안전성을 유지하는 것이 바람직하다.
+
+### 2.7. 생성자 탐색
+
+```java
+Class<?> aClass = Class.forName("reflection.data.BasicData");
+
+System.out.println("==== constructors() ====");
+Constructor<?>[] constructors = aClass.getConstructors();
+for (Constructor<?> constructor : constructors) {
+    System.out.println("constructor = " + constructor);
+}
+
+System.out.println("==== getDeclaredConstructors() ====");
+Constructor<?>[] declaredConstructors = aClass.getDeclaredConstructors();
+for (Constructor<?> declaredConstructor : declaredConstructors) {
+    System.out.println("declaredConstructor = " + declaredConstructor);
+}
+```
+
+- 리플렉션은 클래스의 인스턴스를 생성하기 위한 **생성자(Constructor)** 정보도 동적으로 조회할 수 있다.
+  - **`getConstructors()`**: 상속 관계와 상관없이 해당 클래스의 모든 **`public` 생성자**를 반환한다.
+  - **`getDeclaredConstructors()`**: 접근 제어자와 관계없이 해당 클래스에 선언된 **모든 생성자**를 반환한다.
+- 특정 생성자만 조회하고 싶을 때는 **`getDeclaredConstructor(타입.class)`** 를 사용하며, 인자로 넘겨준 매개변수 타입과 일치하는 생성자를 찾아온다.
+- 필드나 메서드와 마찬가지로 **`setAccessible(true)`** 를 호출하면 `private` 생성자에도 접근하여 인스턴스를 생성할 수 있는 상태가 된다.
+
+### 2.8. 생성자 활용 (동적 인스턴스 생성)
+
+```java
+Class<?> aClass = Class.forName("reflection.data.BasicData");
+
+// 생성자를 동적으로 찾고 인스턴스 생성
+Constructor<?> constructor = aClass.getDeclaredConstructor(String.class);
+constructor.setAccessible(true);
+Object instance = constructor.newInstance("hello");
+System.out.println("instance = " + instance);
+
+// 메서드를 동적으로 찾아서 호출
+Method method1 = aClass.getDeclaredMethod("call");
+method1.invoke(instance);
+```
+
+- **`constructor.newInstance(인자)`**: 조회한 생성자 객체를 사용하여 실제 메모리에 인스턴스를 생성한다.
+- 이 방식의 핵심은 코드 작성 시점에 **특정 클래스명(`BasicData`)이나 메서드명(`call()`)을 직접 코딩(정적 참조)하지 않는다**는 점이다.
+  - 클래스 이름, 생성자 매개변수, 호출할 메서드명을 모두 **문자열 변수**로 처리할 수 있다.
+  - 결과적으로 실행 시점(Runtime)에 어떤 객체를 만들고 어떤 기능을 실행할지 유연하게 결정할 수 있는 **동적 프로그래밍**이 가능해진다.
+- 스프링(Spring)과 같은 현대적인 프레임워크가 개발자가 만든 클래스를 대신 생성하고 의존성을 주입(DI)해 줄 때, 바로 이 리플렉션을 활용한 동적 객체 생성 기술이 핵심적으로 사용된다.
