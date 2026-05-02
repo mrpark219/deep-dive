@@ -139,3 +139,181 @@ public class ElementData3 {
   - **`default` 값 생략**: 애노테이션 정의 시 `default` 값이 지정된 항목(`count` 등)은 값을 명시적으로 전달하지 않아도 자동으로 기본값이 적용되므로 할당을 생략할 수 있다. (참고: `ElementData2`, `ElementData3`)
   - **배열 `{}` 생략**: 배열 타입의 속성(`tags`)에 전달할 데이터 항목이 **단 하나**인 경우에는 중괄호 `{}`를 생략하고 바로 값을 입력할 수 있다. (참고: `ElementData2`의 `tags = "t1"`)
   - **`value` 키워드 생략**: 애노테이션에 값을 전달할 요소가 오직 **`value` 하나뿐인 경우**(나머지는 default가 적용되거나 아예 다른 요소가 없는 경우), `value = ` 키워드 자체를 생략하고 괄호 안에 값만 바로 적을 수 있다. (참고: `ElementData3`의 `"data"`)
+
+## 4. 메타 애노테이션
+
+- 커스텀 애노테이션을 정의할 때 해당 애노테이션의 동작 방식을 제어하기 위해 사용하는 **특별한 애노테이션**을 **메타 애노테이션(Meta Annotation)** 이라 한다.
+
+### 4.1. @Retention
+
+```java
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.ANNOTATION_TYPE)
+public @interface Retention {
+    RetentionPolicy value();
+}
+```
+
+```java
+public enum RetentionPolicy {
+    SOURCE,
+    CLASS,
+    RUNTIME
+}
+```
+
+- 애노테이션의 **생존 기간(Lifecycle)** 을 지정한다.
+  - **`RetentionPolicy.SOURCE`**: 소스 코드에만 남아있으며, 컴파일 시점(class 파일 생성 전)에 완전히 제거된다.
+  - **`RetentionPolicy.CLASS`**: 컴파일 후 `.class` 파일까지는 남아있지만, 자바 프로그램이 실행(Runtime)될 때 메모리에서 제거된다. (생략 시 기본값)
+  - **`RetentionPolicy.RUNTIME`**: 자바 프로그램이 실행 중일 때도 메모리에 계속 남아있어 리플렉션(Reflection)을 통해 동적으로 정보를 읽어올 수 있다. (대부분 이 설정을 사용한다.)
+
+### 4.2. @Target
+
+```java
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.ANNOTATION_TYPE)
+public @interface Target {
+    ElementType[] value();
+}
+```
+
+```java
+public enum ElementType {
+    TYPE,
+    FIELD,
+    METHOD,
+    PARAMETER,
+    CONSTRUCTOR,
+    LOCAL_VARIABLE,
+    ANNOTATION_TYPE,
+    PACKAGE,
+    TYPE_PARAMETER,
+    TYPE_USE,
+    MODULE,
+    RECORD_COMPONENT;
+}
+```
+
+- 애노테이션을 **적용할 수 있는 위치**를 엄격하게 지정한다.
+- 배열 형태로 여러 개를 지정할 수 있으며, 주로 **`TYPE`**(클래스, 인터페이스), **`FIELD`**(멤버 변수), **`METHOD`**(메서드)를 많이 사용한다.
+
+### 4.3. @Documented
+
+```java
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.ANNOTATION_TYPE)
+public @interface Documented {
+}
+```
+
+- 자바 API 문서(JavaDoc)를 생성할 때 해당 애노테이션의 메타데이터 정보가 함께 포함될지 여부를 지정한다.
+
+### 4.4. @Inherited
+
+```java
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.ANNOTATION_TYPE)
+public @interface Inherited {
+}
+```
+
+- **자식 클래스가 부모의 애노테이션을 상속**받을 수 있도록 지정하는 메타 애노테이션이다.
+- 커스텀 애노테이션을 정의할 때 `@Inherited`를 붙이면, 해당 애노테이션이 적용된 부모 클래스를 상속받은 자식 클래스도 자동으로 같은 애노테이션을 부여받은 것으로 처리된다.
+- 단, 이 기능은 **클래스 상속(extends)에서만 작동**하며, 인터페이스의 구현체(implements)에는 절대 적용되지 않는다.
+
+#### @Inherited가 클래스 상속에만 적용되는 이유
+
+- **클래스 상속과 인터페이스 구현의 차이**
+  - 클래스 상속은 자식 클래스가 부모 클래스의 상태와 행위를 그대로 이어받으므로, 부모에 정의된 애노테이션을 자식이 상속받는 것이 논리적으로 아주 자연스럽다.
+  - 반면 인터페이스는 메서드의 시그니처(규격)만을 정의할 뿐 상태나 구현을 가지지 않기 때문에, 구현체가 인터페이스의 애노테이션 메타데이터까지 상속받는다는 것은 객체 지향의 역할 분리 관점에서 잘 맞지 않는다.
+- **인터페이스의 다중 구현과 다이아몬드 문제**
+  - 자바에서 인터페이스는 다중 구현(Multiple Implementation)이 가능하다.
+  - 만약 인터페이스의 애노테이션 상속을 허용한다면, 하나의 구현체가 서로 다른 애노테이션을 가진 여러 개의 인터페이스를 구현할 때 **어떤 애노테이션을 상속받아야 하는지 모호해지거나 충돌**하는 다이아몬드 문제가 발생할 수 있기 때문이다.
+
+## 5. 애노테이션 상속
+
+```java
+public interface Annotation {
+    boolean equals(Object obj);
+    int hashCode();
+    String toString();
+    Class<? extends Annotation> annotationType();
+}
+```
+
+- 자바의 모든 애노테이션은 내부적으로 **`java.lang.annotation.Annotation`** 인터페이스를 묵시적으로 상속받는다.
+- 이 `Annotation` 인터페이스는 개발자가 직접 구현하거나 확장할 수 있는 용도가 아니라, **자바 언어 자체에서 애노테이션을 처리하기 위한 기본 기반**으로 사용된다.
+  - `equals(Object obj)`: 두 애노테이션의 동일성을 비교한다.
+  - `hashCode()`: 애노테이션의 해시 코드를 반환한다.
+  - `toString()`: 애노테이션의 문자열 표현을 반환한다.
+  - `annotationType()`: 애노테이션의 메타데이터 타입(Class)을 반환한다.
+- 모든 애노테이션은 기본적으로 이 인터페이스를 확장하므로, 자바 컴파일러 내부에서 애노테이션은 **특별한 형태의 인터페이스**로 간주된다.
+- 하지만 커스텀 애노테이션을 정의할 때 `implements Annotation`과 같이 **명시적으로 상속하거나 구현할 필요는 전혀 없다**.
+- `@interface` 키워드를 사용하여 애노테이션을 정의하면, **자바 컴파일러가 자동으로 `Annotation` 인터페이스를 확장**하도록 내부적으로 처리해 준다.
+- **주의 사항**: 애노테이션은 다른 커스텀 애노테이션이나 일반 인터페이스를 `extends` 키워드로 **직접 상속할 수 없다**. 시스템이 강제하는 `java.lang.annotation.Annotation` 인터페이스 하나만을 상속할 뿐이다.
+- 따라서 일반적인 클래스나 인터페이스와 달리, 애노테이션들 사이에는 부모-자식 같은 **상속 계층 구조(Inheritance)라는 개념 자체가 아예 존재하지 않는다**.
+
+## 6. 자바 기본 애노테이션
+
+- 자바 언어(JDK) 자체에서 개발자의 편의와 코드 안전성을 위해 **기본적으로 제공하는 애노테이션**들도 존재한다.
+
+### 6.1. @Override
+
+```java
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.SOURCE)
+public @interface Override {
+}
+```
+
+- 부모 클래스나 인터페이스의 **메서드 재정의(Overriding)가 정확하게 잘 되었는지 컴파일러가 체크**하는 데 사용한다.
+- 이 애노테이션을 붙이면 오타가 있거나 파라미터가 달라 재정의가 제대로 되지 않았을 때 **컴파일을 통과하지 못하게 막아준다**. 개발자의 실수를 미연에 완벽히 방지해 주므로 **사용을 강하게 권장**한다.
+- **`RetentionPolicy.SOURCE`**: `@Override`는 오직 컴파일 시점에만 문법 체크 용도로 사용되고 런타임에는 전혀 필요하지 않으므로, 컴파일 이후에는 완전히 제거되도록 설정되어 있다.
+
+### 6.2. @Deprecated
+
+```java
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target(value={CONSTRUCTOR, FIELD, LOCAL_VARIABLE, METHOD, PACKAGE, MODULE, PARAMETER, TYPE})
+public @interface Deprecated {
+    String since() default "";
+    boolean forRemoval() default false;
+}
+```
+
+- 해당 요소(클래스, 메서드 등)가 **더 이상 사용되지 않으며 사용을 권장하지 않음**을 나타내는 애노테이션이다.
+- **사용을 권장하지 않는 주요 이유**:
+  - 해당 요소를 계속 사용할 경우 시스템 오류가 발생할 가능성이 있을 때
+  - 하위 호환성이 깨지거나 향후 버전에서 아예 제거될 예정일 때
+  - 성능이나 구조가 더 나은 최신 대체 기술로 변경되었을 때
+- **주요 속성**:
+  - **`since`**: 해당 기능이 더 이상 사용되지 않게 된(Deprecated 처리된) 기준 버전 정보를 명시한다.
+  - **`forRemoval`**: `true`로 설정되면 미래 버전에 해당 코드가 확실히 제거될 예정임을 나타낸다.
+- **IDE 경고 수준**:
+  - 속성 없이 `@Deprecated`만 붙은 코드를 호출하면, IDE에서 일반적인 경고(취소선 등)를 나타낸다.
+  - `@Deprecated(forRemoval = true)`로 설정된 코드를 호출하면, IDE가 빨간색으로 **심각한 경고**를 표시하여 위험성을 알린다.
+  - 단, 컴파일 시점에 경고만 발생할 뿐 **프로그램 자체는 정상적으로 컴파일되고 작동**한다.
+
+### 6.3. @SuppressWarnings
+
+```java
+@Retention(RetentionPolicy.SOURCE)
+public @interface SuppressWarnings {
+    String[] value();
+}
+```
+
+- 이름 그대로 컴파일러가 띄우는 **경고를 강제로 억제(무시)** 하는 애노테이션이다.
+- 자바 컴파일러가 특정 코드에 대해 위험하다고 경고하지만, 개발자가 해당 코드의 동작과 문제를 확실히 인지하고 있고 안전하다고 판단하여 **더 이상 불필요한 경고창을 띄우지 말라고 지시**할 때 사용한다.
+- `@SuppressWarnings`에 문자열 배열 형태로 전달할 수 있는 **대표적인 억제 속성 값**들은 다음과 같다.
+  - **`all`**: 발생하는 모든 종류의 경고를 일괄 억제한다.
+  - **`deprecation`**: 사용이 권장되지 않는(`@Deprecated`) 코드를 사용할 때 발생하는 경고를 억제한다.
+  - **`unchecked`**: 제네릭(Generic) 타입과 관련된 타입 안정성(unchecked) 경고를 억제한다.
+  - **`serial`**: `Serializable` 인터페이스를 구현할 때 `serialVersionUID` 필드를 명시적으로 선언하지 않아 발생하는 경고를 억제한다.
+  - **`rawtypes`**: 제네릭 타입 파라미터가 명시되지 않은 원시(Raw) 타입을 사용할 때 발생하는 경고를 억제한다.
+  - **`unused`**: 선언해 놓고 한 번도 사용되지 않은 변수, 메서드, 필드 등에 대한 경고를 억제한다.
