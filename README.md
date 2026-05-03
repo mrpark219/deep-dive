@@ -18,6 +18,7 @@
 | [김영한의 실전 자바 - 고급 1편, 멀티스레드와 동시성](./MULTITHREADING-AND-CONCURRENCY/README.md)             | `2025-08-30` ~ `2025-11-04` |
 | [AWS(Amazon Web Services)](./AWS/README.md)                                                                  | `2025-11-05` ~ `2026-01-25` |
 | [Clean Architecture](./CLEAN-ARCHITECTURE/README.md)                                                         | `2026-01-26` ~ `2026-03-06` |
-| [김영한의 실전 자바 - 고급 2편, I/O, 네트워크, 리플렉션](./IO-NETWORK-REFLECTION/README.md)                  | `2026-03-07` ~ `Present`    |
+| [김영한의 실전 자바 - 고급 2편, I/O, 네트워크, 리플렉션](./IO-NETWORK-REFLECTION/README.md)                  | `2026-03-07` ~ `2026-05-02` |
+| [도메인 주도 설계로 시작하는 마이크로서비스 개발](./DDD-MSA/README.md)                                       | `2026-05-03` ~ `Present`    |
 
 추후 새로운 주제를 추가하면서 업데이트할 예정입니다. 🚀
