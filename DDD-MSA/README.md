@@ -3,3 +3,7 @@
 ## 1. 아마존 비즈니스 민첩성의 비밀
 
 [아마존 비즈니스 민첩성의 비밀](./amazon-business-agility.md)
+
+## 2. MSA의 이해
+
+[MSA의 이해](./msa-basics.md)
