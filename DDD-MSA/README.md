@@ -7,3 +7,7 @@
 ## 2. MSA의 이해
 
 [MSA의 이해](./msa-basics.md)
+
+## 3. 마이크로서비스 애플리케이션 아키텍처
+
+[마이크로서비스 애플리케이션 아키텍처](./microservice-application-architecture.md)
