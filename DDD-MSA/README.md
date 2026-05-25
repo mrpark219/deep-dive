@@ -19,3 +19,7 @@
 ## 5. 마이크로서비스 설계
 
 [마이크로서비스 설계](./microservice-architecture-design.md)
+
+## 6. 도서 대출 프로그램 예시
+
+[도서 대출 프로그램 예시](./book-rental-program.md)
