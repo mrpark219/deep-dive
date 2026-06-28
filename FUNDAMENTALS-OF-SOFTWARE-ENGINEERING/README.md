@@ -21,3 +21,7 @@
 ## 5. 자동 테스트: 좋은 소프트웨어를 만드는 최고의 습관
 
 [자동 테스트: 좋은 소프트웨어를 만드는 최고의 습관](./automated-testing.md)
+
+## 6. 낯선 시스템에 빨리 친숙해지기
+
+[낯선 시스템에 빨리 친숙해지기](./exploring-and-modifying-unfamiliar-systems.md)
