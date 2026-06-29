@@ -25,3 +25,7 @@
 ## 6. 낯선 시스템에 빨리 친숙해지기
 
 [낯선 시스템에 빨리 친숙해지기](./exploring-and-modifying-unfamiliar-systems.md)
+
+## 7. 엔지니어라면 꼭 알아야 할 UI 설계 기초
+
+[엔지니어라면 꼭 알아야 할 UI 설계 기초](./user-interface-design.md)
