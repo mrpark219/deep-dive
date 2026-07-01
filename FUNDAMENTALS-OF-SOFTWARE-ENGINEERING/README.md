@@ -32,4 +32,6 @@
 
 ## 8. 다양한 데이터 기술을 적절하게 사용하는 방법
 
-[다양한 데이터 기술을 적절하게 사용하는 방법](./working-with-data.md)
+- [다양한 데이터 기술을 적절하게 사용하는 방법](./working-with-data.md)
+- [자료형과 형식의 이해](./working-with-data-types-and-formats.md)
+- [효과적인 데이터 저장](./working-with-data-storage.md)
