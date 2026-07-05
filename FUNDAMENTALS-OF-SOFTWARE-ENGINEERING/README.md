@@ -37,3 +37,7 @@
 - [효과적인 데이터 저장](./working-with-data-storage.md)
 - [데이터 질의와 성능 관리](./working-with-data-querying-and-optimization.md)
 - [데이터 이전과 변환](./working-with-data-migration-and-transformation.md)
+
+## 9. 소프트웨어 아키텍처: 복잡하고 중요한 결정
+
+[소프트웨어 아키텍처: 복잡하고 중요한 결정](./software-architecture.md)
