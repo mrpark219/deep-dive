@@ -41,3 +41,8 @@
 ## 9. 소프트웨어 아키텍처: 복잡하고 중요한 결정
 
 [소프트웨어 아키텍처: 복잡하고 중요한 결정](./software-architecture.md)
+
+## 10. 운영 환경: 코드가 살아야 하는 낯선 환경
+
+- [복잡한 운영 환경](./to-production-operating-environment.md)
+- [운영 준비된 코드 구축](./to-production-production-ready-code.md)
