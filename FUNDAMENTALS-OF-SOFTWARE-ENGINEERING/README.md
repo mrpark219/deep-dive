@@ -48,3 +48,4 @@
 - [운영 준비된 코드 구축](./to-production-production-ready-code.md)
 - [보안과 규제 준수](./to-production-security-and-compliance.md)
 - [전개 파이프라인](./to-production-deployment-pipeline.md)
+- [운영 시스템 모니터링과 유지보수](./to-production-operations-monitoring-and-maintenance.md)
