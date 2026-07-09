@@ -49,3 +49,7 @@
 - [보안과 규제 준수](./to-production-security-and-compliance.md)
 - [전개 파이프라인](./to-production-deployment-pipeline.md)
 - [운영 시스템 모니터링과 유지보수](./to-production-operations-monitoring-and-maintenance.md)
+
+## 11. 생산성 강화: 효율적으로 일하기
+
+[생산성 강화: 효율적으로 일하기](./powering-up-your-productivity.md)
