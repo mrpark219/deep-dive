@@ -57,3 +57,7 @@
 ## 12. 즐겁게 배우며 앞서가는 엔지니어 되기
 
 [즐겁게 배우며 앞서가는 엔지니어 되기](./learning-to-learn.md)
+
+## 13. 기술 세계의 소프트 스킬
+
+[기술 세계의 소프트 스킬](./mastering-soft-skills-in-the-tech-world.md)
