@@ -61,3 +61,7 @@
 ## 13. 기술 세계의 소프트 스킬
 
 [기술 세계의 소프트 스킬](./mastering-soft-skills-in-the-tech-world.md)
+
+## 14. 성공적인 경력 계획과 관리
+
+[성공적인 경력 계획과 관리](./career-management.md)
