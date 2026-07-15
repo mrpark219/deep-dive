@@ -65,3 +65,7 @@
 ## 14. 성공적인 경력 계획과 관리
 
 [성공적인 경력 계획과 관리](./career-management.md)
+
+## 15. AI로 무장한 소프트웨어 엔지니어
+
+[AI로 무장한 소프트웨어 엔지니어](./the-ai-powered-software-engineer.md)
