@@ -20,6 +20,7 @@
 | [Clean Architecture](./CLEAN-ARCHITECTURE/README.md)                                                         | `2026-01-26` ~ `2026-03-06` |
 | [김영한의 실전 자바 - 고급 2편, I/O, 네트워크, 리플렉션](./IO-NETWORK-REFLECTION/README.md)                  | `2026-03-07` ~ `2026-05-02` |
 | [도메인 주도 설계로 시작하는 마이크로서비스 개발](./DDD-MSA/README.md)                                       | `2026-05-03` ~ `2026-06-21` |
-| [다시, 소프트웨어 엔지니어](./FUNDAMENTALS-OF-SOFTWARE-ENGINEERING/README.md)                                | `2026-06-22` ~ `Present`    |
+| [다시, 소프트웨어 엔지니어](./FUNDAMENTALS-OF-SOFTWARE-ENGINEERING/README.md)                                | `2026-06-22` ~ `2026-07-18` |
+| [외부 시스템 연동 및 장애 대응](./EXTERNAL-INTEGRATION/README.md)                                            | `2026-07-19` ~ `진행 중`    |
 
 추후 새로운 주제를 추가하면서 업데이트할 예정입니다. 🚀
