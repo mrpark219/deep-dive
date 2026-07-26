@@ -104,3 +104,21 @@
 | **스레드 동작**    | I/O 대기시간($W$) 동안 **워커 스레드가 점유(Blocked)** | `Mono`/`Flux` 반환 후 **워커 스레드 즉시 해방**                                                         |
 | **과부하 시 여파** | 지연 수치($W/C$)가 높아지면 스레드가 폭증하여 마비     | 이벤트 루프 + ConnectionProvider가 대기를 수용하여 높은 동시성 유지                                     |
 | **전제 조건**      | JPA 등 블로킹 요소가 있어도 손쉽게 동작                | **전체 경로(Controller $\rightarrow$ External API $\rightarrow$ R2DBC)가 Non-Blocking**이어야 이득 유효 |
+
+## 5. 관측 가능성 (Metrics & USL Law)
+
+### 5.1. 주요 모니터링 메트릭
+
+| 계층             | 지표 (Prometheus Metric)                           | 의미 및 관측 포인트                                         |
+| :--------------- | :------------------------------------------------- | :---------------------------------------------------------- |
+| **Tomcat**       | `tomcat_threads_busy_threads / config_max_threads` | 워커 스레드 포화율 (80% 이상 시 위험)                       |
+| **HTTP 풀**      | `httpcomponents_httpclient_pool_total_pending`     | 외부 커넥션 대기 수치 (**0 유지 목표**)                     |
+| **HikariCP**     | `hikaricp_connections_pending`                     | DB 커넥션 대기 수치 (지속 발생 시 병목)                     |
+| **Acquire Time** | `*_acquire_seconds`                                | **커넥션을 얻는 데 걸린 시간 (다음 병목 이동의 핵심 지표)** |
+| **응답/SLO**     | `p99 latency`, `error rate`                        | 사용자 경험 및 타임아웃 위반 여부                           |
+
+### 5.2. USL(Universal Scalability Law) 법칙과 무릎(Knee)
+
+- **병목의 이동**: 특정 풀의 크기를 한없이 키우면 병목은 바로 옆 계층(다음 풀 또는 외부 PG 시스템)으로 이동한다.
+- **USL 무릎(Knee Point)**: 자원/동시성을 늘릴 때 처리량(TPS)이 최대에 달하고 응답 시간이 급증하기 직전의 최적 임계점.
+- **과부하 안티패턴**: USL 무릎을 넘어선 상태로 HTTP 풀을 키우면 다운스트림(PG)에 과부하가 걸려 처리량이 오히려 꺾이고 Latency가 폭발한다.
