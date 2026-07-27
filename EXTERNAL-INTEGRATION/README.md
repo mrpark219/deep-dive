@@ -11,3 +11,7 @@
 ## 3. HTTP/DB 커넥션풀 산정과 blocking/reactive 비교
 
 [커넥션 풀 산정 및 블로킹 vs 리액티브 모델 비교](./connection-pool-blocking-reactive.md)
+
+## 4. 벌크헤드 & 이중화
+
+[벌크헤드 & 이중화](./bulkhead-failover.md)
