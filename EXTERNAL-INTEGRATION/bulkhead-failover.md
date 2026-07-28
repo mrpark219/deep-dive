@@ -38,3 +38,25 @@
 - **풀 산정**: 시스템 목표 처리량과 지연 시간을 기반으로 필요한 자원 크기를 계산한다 ($L = \lambda \times W$).
 - **벌크헤드**: 산정된 자원 풀을 어떤 의존성들과 나눌 것인지 소유권을 격리한다.
 - 아무리 정확히 풀 크기를 산정했더라도 자원을 공유하면 단일 지연에 의해 전체 시스템이 마비되므로 산정과 격리는 함께 적용되어야 한다.
+
+## 3. 결제 PG 이중화(Failover) 구현 및 정책
+
+Primary PG에 장애가 발생했을 때 Secondary PG로 연동을 자동 전환하여 시스템 가용성을 유지하는 Active-Passive 이중화 구조를 구축한다.
+
+### 3.1. FailoverPgConnector 핵심 구현
+
+```kotlin
+fun confirm(cmd: PgCommand): PgResult =
+    try {
+        primary.confirm(cmd)
+    } catch (e: PgServerException) {
+        // Primary 5xx / Timeout 발생 시 전환 (회로 OPEN 전 단계)
+        if (enabled) {
+            log.warn("Primary PG failure -> Failover to Secondary PG")
+            secondary.confirm(cmd)
+        } else {
+            throw e // 이중화 OFF 시 기본 동작 유지
+        }
+    }
+    // PgDeclinedException(비즈니스 거절)은 catch 하지 않고 상위로 전파
+```
