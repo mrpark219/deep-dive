@@ -50,3 +50,77 @@ graph TD
   - 레플리카가 마스터에 최초 연결 시, 마스터는 현재 메모리의 **전체 스냅샷**을 생성한다.
   - 생성된 **RDB 파일**을 네트워크를 통해 레플리카로 전송하며, 레플리카는 이를 메모리에 로드하여 초기화를 완료한다.
 - 초기 동기화 이후에는 마스터에서 발생하는 모든 쓰기 명령이 **실시간 스트리밍 방식**으로 레플리카에 전달된다.
+
+## 3. Sentinel
+
+```mermaid
+graph TD
+    C[클라이언트]
+
+    S1(Sentinel 1)
+    S2(Sentinel 2)
+    S3(Sentinel 3)
+
+    M[Master]
+    R1[Replica 1]
+    R2[Replica 2]
+
+    %% 클라이언트 연결 (이미지 3 기준)
+    C --> S1
+    C --> S2
+    C --> S3
+
+    %% Sentinel 모니터링 (점선)
+    S1 -.->|모니터링| M
+    S1 -.->|모니터링| R1
+    S2 -.->|모니터링| M
+    S2 -.->|모니터링| R1
+    S2 -.->|모니터링| R2
+    S3 -.->|모니터링| M
+    S3 -.->|모니터링| R2
+
+    %% 데이터 복제 (실선)
+    M -->|복제| R1
+    M -->|복제| R2
+
+    %% 색상 스타일 지정
+    style C fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+    style S1 fill:#e0f2f1,stroke:#00695c,stroke-width:2px
+    style S2 fill:#e0f2f1,stroke:#00695c,stroke-width:2px
+    style S3 fill:#e0f2f1,stroke:#00695c,stroke-width:2px
+    style M fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    style R1 fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
+    style R2 fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
+```
+
+- **Sentinel**은 기본 Master-Replica 구조의 수동 장애 조치 한계를 해결하는 **독립 프로세스**이다.
+- Redis 서버와 별도의 전용 포트(기본 26379)를 사용하며, Redis 노드 상태를 감시하는 **감시자 역할**을 수행한다.
+
+### 3.1. 주요 기능
+
+- **모니터링(Monitoring)**: 마스터와 모든 레플리카 노드에 주기적으로 `PING`을 보내 정상 동작 여부를 확인한다.
+- **알림(Notification)**: 감시 중인 Redis 인스턴스에 문제가 발생하면 관리자나 외부 시스템에 장애 상황을 통보한다.
+- **자동 장애 조치(Automatic Failover)**: 마스터 노드 다운 시 레플리카 중 하나를 새로운 마스터로 자동 승격하여 **서비스 중단 시간을 최소화**한다.
+
+### 3.2. 고가용성 구성 (쿼럼, Quorum)
+
+- Sentinel 프로세스 자체도 단일 지점 장애(SPOF)가 될 수 있으므로 **최소 3개 이상** 구축하는 것이 권장된다.
+- 특정 Sentinel의 오판이나 네트워크 분할 현상을 방지하기 위해 **쿼럼(Quorum, 정족수)** 개념을 사용한다.
+- 쿼럼 설정값이 2일 때, Sentinel 3개 중 2개 이상이 마스터 장애에 동의해야 실제 장애 조치가 수행된다.
+
+### 3.3. 클라이언트 연결 방식
+
+- 클라이언트는 Sentinel 노드에 먼저 접근하여 **현재 마스터의 IP 주소**를 조회한다.
+- 반환받은 마스터 주소로 최종 요청을 전달하므로 마스터 변경 시에도 정상 연결을 유지할 수 있다.
+
+### 3.4. 장애 감지 단계
+
+1. **주관적 다운 (S-Down, Subjective Down)**: 개별 Sentinel이 `down-after-milliseconds`로 설정된 시간 동안 마스터 응답을 받지 못하면 해당 Sentinel 혼자 **주관적 다운 상태**로 판단한다.
+2. **객관적 다운 (O-Down, Objective Down)**: 쿼럼 지정 수 이상의 Sentinel이 S-Down 상태 판단에 동의하면 **객관적 다운 상태**로 확정되고 장애 조치가 시작된다.
+
+### 3.5. 장애 조치 (Failover) 프로세스
+
+1. **리더 선출**: Sentinel 간 투표를 진행하여 실제 장애 조치를 수행할 **리더 Sentinel**을 선출한다.
+2. **마스터 승격**: 리더 Sentinel이 최신 상태의 레플리카 노드 하나를 골라 **새로운 마스터로 승격**시킨다.
+3. **재구성 (Reconfiguration)**: 나머지 레플리카 노드들이 신규 마스터를 바라보도록 **설정을 변경**한다.
+4. **기존 마스터 전환**: 기존 마스터가 추후 복구되면 Sentinel이 이를 감지하여 **레플리카 노드로 강제 전환** 처리한다.
