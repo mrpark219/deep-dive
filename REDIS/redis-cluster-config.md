@@ -124,3 +124,64 @@ graph TD
 2. **마스터 승격**: 리더 Sentinel이 최신 상태의 레플리카 노드 하나를 골라 **새로운 마스터로 승격**시킨다.
 3. **재구성 (Reconfiguration)**: 나머지 레플리카 노드들이 신규 마스터를 바라보도록 **설정을 변경**한다.
 4. **기존 마스터 전환**: 기존 마스터가 추후 복구되면 Sentinel이 이를 감지하여 **레플리카 노드로 강제 전환** 처리한다.
+
+## 4. 샤딩 (Redis Cluster)
+
+```mermaid
+graph TD
+    %% Node definitions with HTML formatting for multi-line and color
+    Client[클라이언트]:::clientNode
+    M1["Master 1<br>슬롯 0-5460"]:::masterNode
+    M2["Master 2<br>슬롯 5461-10922"]:::masterNode
+    M3["Master 3<br>슬롯 10923-16383"]:::masterNode
+    R1[Replica 1]:::replicaNode
+    R2[Replica 2]:::replicaNode
+    R3[Replica 3]:::replicaNode
+
+    %% Solid-line edges (primary connections)
+    Client --> M1
+    Client --> M2
+    Client --> M3
+    M1 --> R1
+    M2 --> R2
+    M3 --> R3
+
+    %% Dotted-line edges with Gossip labels
+    M1 -. Gossip .-> M2:::gossipEdge
+    M2 -. Gossip .-> M3:::gossipEdge
+    M3 -. Gossip .-> M1:::gossipEdge
+
+    %% Styling definitions
+    classDef clientNode fill:#e1f5fe,stroke:#0277bd,stroke-width:2px;
+    classDef masterNode fill:#fff8e1,stroke:#fbc02d,stroke-width:2px;
+    classDef replicaNode fill:#e8f5e9,stroke:#388e3c,stroke-width:2px;
+    classDef gossipEdge stroke-dasharray: 5 5,stroke:#757575;
+```
+
+- **샤딩(Sharding)** 은 데이터를 여러 노드에 분산 저장하는 기법으로, 단일 서버의 **메모리 한계를 극복**할 수 있다.
+
+### 4.1. 해시 슬롯 (Hash Slot)
+
+- Redis 클러스터는 **해시 슬롯(Hash Slot)** 개념을 활용하여 데이터를 분산 관리한다.
+- 전체 데이터 영역은 총 **16,384개의 해시 슬롯**으로 나뉘며, 모든 키는 해시 함수 계산을 거쳐 `0 ~ 16383` 사이의 슬롯 번호를 할당받는다.
+- 각 마스터 노드는 전체 슬롯 중 일부분을 나누어 담당한다.
+  - 예: 마스터 3대 구성 시 **Master 1**(0~5460), **Master 2**(5461~10922), **Master 3**(10923~16383)으로 분할 할당한다.
+
+### 4.2. 노드 간 통신 및 고가용성
+
+- 클러스터 노드끼리는 별도의 전용 포트를 사용해 **가십 프로토콜(Gossip Protocol)** 로 통신한다.
+- 주기적인 정보 교환을 통해 담당 슬롯, 노드 상태, 마스터/레플리카 정보 등 **전체 상태를 파악**한다.
+- 각 마스터는 하나 이상의 레플리카를 가질 수 있으며, 마스터 장애 시 **Sentinel 없이 자체적으로 레플리카를 마스터로 승격**시킨다.
+
+### 4.3. 클라이언트 요청 처리 매커니즘
+
+- 클라이언트가 명령어를 전송하면 노드는 해당 키의 해시 슬롯을 계산한다.
+- 자신이 담당하는 슬롯이 아닐 경우 `MOVED` 응답을 반환하여 올바른 노드로 재요청하도록 안내한다.
+- 클러스터 지원 클라이언트는 **슬롯 매핑 정보를 캐싱**하므로, 최초 연결 이후에는 재요청 과정 없이 올바른 노드로 직접 요청을 전송한다.
+
+### 4.4. 제약 사항 및 해시태그 (Hash Tag)
+
+- 여러 키를 한 번에 처리하는 **멀티키 명령어**(`MGET`, `MSET` 등) 실행 시 모든 키가 **동일한 슬롯**에 위치해야 한다.
+- 서로 다른 슬롯의 키를 동시에 조회하면 `CROSSSLOT` 에러가 발생한다.
+- 이를 해결하기 위해 **해시태그(Hash Tag)** 기능을 활용한다.
+- 키 이름에 중괄호를 사용(예: `{user:1000}:name`, `{user:1000}:age`)하면 **중괄호 안의 문자열만 해시 계산**에 사용되므로 두 키를 같은 슬롯에 강제 배치할 수 있다.
