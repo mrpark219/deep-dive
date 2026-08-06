@@ -7,3 +7,7 @@
 ## 2. Redis 클러스터 구성
 
 [Redis 클러스터 구성](./redis-cluster-config.md)
+
+## 3. Redis 기본 자료 구조와 명령어
+
+[Redis 기본 자료 구조와 명령어](./redis-basic-ds-and-commands.md)
