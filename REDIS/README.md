@@ -15,3 +15,7 @@
 ## 4. Redis 주의 사항 & Memory Persistence
 
 [Redis 주의 사항 & Memory Persistence](./redis-practical-considerations-and-persistence.md)
+
+## 5. Redis 심화 개념 및 활용 패턴
+
+[Redis 심화 개념 및 활용 패턴](./redis-advanced-concepts-and-patterns.md)
