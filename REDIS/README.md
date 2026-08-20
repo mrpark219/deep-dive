@@ -19,3 +19,7 @@
 ## 5. Redis 심화 개념 및 활용 패턴
 
 [Redis 심화 개념 및 활용 패턴](./redis-advanced-concepts-and-patterns.md)
+
+## 6. Redis 환경 설정
+
+[Redis 환경 설정](./redis-configuration.md)
