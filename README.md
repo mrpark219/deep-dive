@@ -22,6 +22,7 @@
 | [도메인 주도 설계로 시작하는 마이크로서비스 개발](./DDD-MSA/README.md)                                       | `2026-05-03` ~ `2026-06-21` |
 | [다시, 소프트웨어 엔지니어](./FUNDAMENTALS-OF-SOFTWARE-ENGINEERING/README.md)                                | `2026-06-22` ~ `2026-07-18` |
 | [외부 시스템 연동 및 장애 대응](./EXTERNAL-INTEGRATION/README.md)                                            | `2026-07-19` ~ `2026-08-01` |
-| [Redis](./REDIS/README.md)                                                                                   | `2026-08-02` ~ `진행 중`    |
+| [Redis](./REDIS/README.md)                                                                                   | `2026-08-02` ~ `2026-08-21` |
+| [토비의 스프링6 - 이해와 원리](./TOBY-SPRING6/README.md)                                                     | `2026-08-22` ~ `진행 중`    |
 
 추후 새로운 주제를 추가하면서 업데이트할 예정입니다. 🚀
