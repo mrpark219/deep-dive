@@ -7,3 +7,7 @@
 ## 2. 객체지향 설계 원칙과 패턴
 
 [객체지향 설계 원칙과 패턴](./object-oriented-design-principles-and-patterns.md)
+
+## 3. 테스트
+
+[테스트](./test.md)
