@@ -27,3 +27,28 @@
 - 의존 오브젝트가 인스턴스 생성 시점이 아닌 **메소드 호출 시점에 파라미터로 전달되는 방식**이다.
 - 동적으로 실행 전략을 변경할 수 있는 의존관계 주입(DI)의 한 종류이다.
 - 공식 명칭으로 **메소드 호출 주입(Method Call Injection)** 이라고 부른다.
+
+### 2.3. 템플릿/콜백의 작업 흐름
+
+```mermaid
+sequenceDiagram
+    participant Client as 클라이언트(client)
+    participant Callback as 콜백(callback)
+    participant Template as 템플릿(template)
+
+    Client->>Client: (1) Callback 생성
+    Client->>Template: (2) Callback 전달 / Template 호출
+    activate Template
+    Template->>Template: (3) Workflow 시작
+    Template->>Template: (4) 참조정보 생성
+    Template->>Callback: (5) Callback 호출 / 참조정보 전달
+    activate Callback
+    Callback->>Client: (6) Client final 변수 참조
+    Callback->>Callback: (7) 작업 수행
+    Callback->>Template: (8) Callback 작업 결과
+    deactivate Callback
+    Template->>Template: (9) Workflow 진행
+    Template->>Template: (10) Workflow 마무리
+    Template->>Client: (11) Template 작업 결과
+    deactivate Template
+```
