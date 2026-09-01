@@ -52,3 +52,31 @@ sequenceDiagram
     Template->>Client: (11) Template 작업 결과
     deactivate Template
 ```
+
+### 2.4. 스프링이 제공하는 템플릿
+
+#### RestTemplate
+
+- HTTP API 요청과 응답을 처리하는 동기식 템플릿이다.
+  - HTTP 클라이언트 라이브러리 확장: `ClientHttpRequestFactory` 전략을 사용한다.
+  - 메시지 바디를 변환하는 전략: `HttpMessageConverter`를 사용한다.
+- **ClientHttpRequestFactory**
+  - 다양한 HTTP 클라이언트 기술을 추상화하여 `ClientHttpRequest`를 생성하는 전략 인터페이스이다.
+  - `SimpleClientHttpRequestFactory`: JDK 기본 `HttpURLConnection`을 사용한다.
+  - `JdkClientHttpRequestFactory`: Java 11 표준 `HttpClient`를 사용한다.
+  - `ReactorNettyClientRequestFactory`: Netty 기반 클라이언트를 사용한다.
+  - `JettyClientHttpRequestFactory`: Jetty HTTP 클라이언트를 사용한다.
+  - `OkHttp3ClientHttpRequestFactory`: Square사의 `OkHttpClient`를 사용한다.
+- `doExecute()`
+  - HTTP API 호출 워크플로우(Workflow)를 정의하고 있는 핵심 템플릿 메소드이며 두 개의 콜백을 전달받는다.
+    - `RequestCallback`: 요청 헤더와 본문을 준비하고 작성하는 콜백 인터페이스이다.
+    - `ResponseExtractor`: HTTP 응답 데이터를 원하는 오브젝트 타입으로 추출 및 변환하는 콜백 인터페이스이다.
+  - `execute()`, `getForObject()`, `postForEntity()` 등 개발 편의를 위한 다양한 래퍼(Wrapper) 메소드를 제공한다.
+
+#### 그 외 스프링 템플릿
+
+- `JdbcTemplate`: JDBC 기반 데이터 접근 및 SQL 실행을 지원하는 템플릿이다.
+- `JmsTemplate`: JMS(Java Message Service) 기반 메시지 송수신 작업을 처리하는 템플릿이다.
+- `TransactionTemplate`: 프로그래밍 방식으로 트랜잭션 경계를 설정하고 관리하는 템플릿이다.
+- `HibernateTemplate`: 하이버네이트(Hibernate) 세션 관리 및 데이터 처리를 지원하는 레거시 템플릿이다.
+- `SqlSessionTemplate`: MyBatis 연동 시 스프링 트랜잭션과 통합된 `SqlSession`을 제공하는 템플릿이다.
