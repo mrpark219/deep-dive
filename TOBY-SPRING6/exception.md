@@ -111,3 +111,17 @@ public void method3() throws Exception {
   - 원본 원인 예외(`cause`)를 보존하여 스택 트레이스 추적 및 디버깅을 지원한다.
 - **설계 원칙**
   - 예외는 발생 원인뿐만 아니라 처리되는 아키텍처 계층과 도메인 맥락의 의미를 함께 고려하여 설계해야 한다.
+
+## 8. 스프링 데이터 액세스 예외 처리
+
+### 8.1. JDBC SQLException
+
+- JDBC를 기반으로 동작하는 데이터 접근 기술 전반에서 발생하는 표준 체크 예외이다.
+- JDBC, MyBatis는 물론 내부적으로 JDBC를 활용하는 JPA 구현체에서도 발생할 수 있다.
+- 데이터베이스 벤더마다 제각각인 고유 에러 코드(Error Code)나 특정 데이터 접근 기술에 종속적인 예외 처리 코드를 유발한다.
+
+### 8.2. DataAccessException
+
+- 데이터베이스 에러 코드와 데이터 접근 기술에 독립적인 **런타임 예외(RuntimeException) 추상 계층**이다.
+- 하위 기술의 체크 예외를 스프링의 일관된 런타임 예외 계층으로 전환해 주는 **예외 변환기(Exception Translator)** 를 제공한다.
+- `org/springframework/jdbc/support/sql-error-codes.xml` 파일에 정의된 데이터베이스별 오류 코드를 매핑 테이블로 참조하여, 상황에 맞는 구체적인 예외(`DuplicateKeyException`, `BadSqlGrammarException` 등)로 자동 번역한다.
