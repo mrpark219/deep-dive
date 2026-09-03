@@ -19,3 +19,7 @@
 ## 5. 예외
 
 [예외](./exception.md)
+
+## 6. 서비스 추상화
+
+[서비스 추상화](./service-abstraction.md)
