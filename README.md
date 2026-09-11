@@ -23,6 +23,7 @@
 | [다시, 소프트웨어 엔지니어](./FUNDAMENTALS-OF-SOFTWARE-ENGINEERING/README.md)                                | `2026-06-22` ~ `2026-07-18` |
 | [외부 시스템 연동 및 장애 대응](./EXTERNAL-INTEGRATION/README.md)                                            | `2026-07-19` ~ `2026-08-01` |
 | [Redis](./REDIS/README.md)                                                                                   | `2026-08-02` ~ `2026-08-21` |
-| [토비의 스프링6 - 이해와 원리](./TOBY-SPRING6/README.md)                                                     | `2026-08-22` ~ `진행 중`    |
+| [토비의 스프링6 - 이해와 원리](./TOBY-SPRING6/README.md)                                                     | `2026-08-22` ~ `2026-09-10` |
+| [토비의 클린 스프링 - 도메인 모델 패턴과 헥사고날 아키텍처 Part 2](./CLEAN-SPRING-HEXAGONAL-PART2/README.md) | `2026-09-11` ~ `진행 중`    |
 
 추후 새로운 주제를 추가하면서 업데이트할 예정입니다. 🚀
