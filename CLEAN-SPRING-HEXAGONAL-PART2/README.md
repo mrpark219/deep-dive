@@ -159,3 +159,61 @@ classDiagram
 - **단방향 의존성 원칙**
   - 컴포넌트 간 의존 방향은 반드시 **단방향**을 유지해야 한다.
   - 순환 참조(`Instructor -> Member` 및 `Member -> Instructor`)는 아키텍처 안정성을 해치고 확장을 저해하므로 금지한다.
+
+## 9. 커스텀 스테레오타입 합성 애노테이션
+
+### 9.1. 메타 애노테이션
+
+- **메타 애노테이션(Meta-Annotation)** 은 다른 애노테이션에 적용하는 애노테이션이다.
+- 애노테이션 자체의 **특성, 동작, 역할을 정의하거나 설명하는 데 사용**한다.
+- Spring은 애노테이션에 선언된 **메타 애노테이션 계층을 탐색**하여 필요한 기능을 적용한다.
+- 이를 활용하면 여러 애노테이션을 하나의 커스텀 애노테이션으로 묶은 **합성 애노테이션(Composed Annotation)** 을 만들 수 있다.
+
+#### Spring의 메타 애노테이션 활용 예시
+
+```java
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@Indexed
+public @interface Component {
+}
+
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@Component
+public @interface Service {
+}
+
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@Inherited
+@BootstrapWith(DataJpaTestContextBootstrapper.class)
+@ExtendWith(SpringExtension.class)
+@OverrideAutoConfiguration(enabled = false)
+@TypeExcludeFilters(DataJpaTypeExcludeFilter.class)
+@Transactional
+@AutoConfigureCache
+@AutoConfigureDataJpa
+@AutoConfigureTestDatabase
+@AutoConfigureTestEntityManager
+@ImportAutoConfiguration
+public @interface DataJpaTest {
+}
+```
+
+- `@Service`는 `@Component`를 메타 애노테이션으로 사용하므로 **컴포넌트 스캔의 대상**이 된다.
+- `@DataJpaTest`는 테스트에 필요한 여러 애노테이션을 조합한 **합성 애노테이션**이다.
+- 이처럼 메타 애노테이션을 활용하면 반복적으로 선언해야 하는 설정을 하나의 애노테이션으로 추상화할 수 있다.
+
+### 9.2. 스테레오타입 애노테이션
+
+- 일반적인 의미에서 **스테레오타입(Stereotype)** 은 고정관념이나 정형화된 인식을 의미한다.
+- UML에서는 기존 모델 요소에 **특정 역할이나 의미를 부여하기 위한 레이블**을 의미한다.
+  - 예시는 `<<entity>>`, `<<interface>>`, `<<component>>` 등이다.
+- Spring에서 **스테레오타입 애노테이션**은 클래스에 특정 역할을 부여하고, Spring 컨테이너가 이를 인식하여 활용할 수 있도록 하는 애노테이션이다.
+  - 대표적으로 `@Component`, `@Service`, `@Controller`, `@Repository`가 있다.
+- 사용자가 직접 **커스텀 스테레오타입 애노테이션**을 정의하여 애플리케이션의 아키텍처나 도메인에 맞는 의미와 역할을 부여할 수도 있다.
+- 커스텀 스테레오타입을 사용하면 클래스의 역할을 애노테이션만으로 명확하게 표현할 수 있어 **코드의 의도와 아키텍처 구조를 드러내기 쉽다**.
